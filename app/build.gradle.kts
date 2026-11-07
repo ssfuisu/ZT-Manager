@@ -142,7 +142,7 @@ dependencies {
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.9.0")
 
     // Archives
-    implementation("net.lingala.zip4j:zip4j:2.11.5")
+    implementation("net.lingala.zip4j:zip4j:2.11.6")
     implementation("org.apache.commons:commons-compress:1.27.1")
     implementation("org.tukaani:xz:1.10")
     implementation("com.github.omicronapps:7-Zip-JBinding-4Android:Release-16.02-2.03")
