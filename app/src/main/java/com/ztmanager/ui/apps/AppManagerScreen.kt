@@ -5,6 +5,8 @@ import android.content.pm.ApplicationInfo
 import android.content.pm.PackageManager
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.horizontalScroll
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -78,7 +80,9 @@ data class AppItem(
     val apkPath: String,
     val splits: List<String>,
     val size: Long,
-    val info: ApplicationInfo
+    val info: ApplicationInfo,
+    val installed: Long,
+    val updated: Long
 )
 
 private fun loadApps(context: Context): List<AppItem> {
@@ -97,7 +101,9 @@ private fun loadApps(context: Context): List<AppItem> {
             apkPath = ai.sourceDir,
             splits = splits,
             size = File(ai.sourceDir).length() + splits.sumOf { File(it).length() },
-            info = ai
+            info = ai,
+            installed = p.firstInstallTime,
+            updated = p.lastUpdateTime
         )
     }.sortedBy { it.label.lowercase() }
 }
@@ -137,10 +143,19 @@ fun AppManagerScreen() {
     var query by remember { mutableStateOf("") }
     var searching by remember { mutableStateOf(false) }
     var selected by remember { mutableStateOf<AppItem?>(null) }
+    var sort by remember { mutableStateOf(0) }
     val apps by produceState<List<AppItem>?>(null) {
         value = withContext(Dispatchers.IO) { loadApps(context) }
     }
     val list = apps?.filter { (showSystem || !it.system) && (query.isBlank() || it.label.contains(query, true) || it.packageName.contains(query, true)) }
+        ?.let { l ->
+            when (sort) {
+                1 -> l.sortedByDescending { it.size }
+                2 -> l.sortedByDescending { it.installed }
+                3 -> l.sortedByDescending { it.updated }
+                else -> l
+            }
+        }
 
     Scaffold(
         topBar = {
@@ -174,6 +189,11 @@ fun AppManagerScreen() {
                 FilterChip(selected = !showSystem, onClick = { showSystem = false }, label = { Text(stringResource(R.string.user_apps)) })
                 Spacer(Modifier.width(8.dp))
                 FilterChip(selected = showSystem, onClick = { showSystem = true }, label = { Text(stringResource(R.string.all_apps)) })
+            }
+            Row(Modifier.horizontalScroll(rememberScrollState()).padding(horizontal = 12.dp)) {
+                listOf(R.string.sort_name, R.string.sort_size, R.string.sort_installed, R.string.sort_updated).forEachIndexed { i, label ->
+                    FilterChip(selected = sort == i, onClick = { sort = i }, label = { Text(stringResource(label)) }, modifier = Modifier.padding(end = 6.dp))
+                }
             }
             if (list == null) {
                 Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) { CircularProgressIndicator() }
@@ -237,7 +257,7 @@ private fun AppRow(app: AppItem, onClick: () -> Unit) {
             Text(app.label, maxLines = 1, overflow = TextOverflow.Ellipsis, style = MaterialTheme.typography.bodyLarge)
             Text(app.packageName, maxLines = 1, overflow = TextOverflow.Ellipsis, style = MaterialTheme.typography.bodySmall, color = ZtTheme.colors.secondaryText)
             Text(
-                app.versionName + "  " + Format.size(app.size) + (if (app.splits.isNotEmpty()) "  split" else ""),
+                app.versionName + "  " + Format.size(app.size) + "  " + Format.date(app.updated) + (if (app.splits.isNotEmpty()) "  split" else ""),
                 style = MaterialTheme.typography.bodySmall,
                 color = ZtTheme.colors.secondaryText
             )

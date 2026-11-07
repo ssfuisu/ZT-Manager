@@ -69,7 +69,8 @@ object Opener {
                 FileType.VIDEO -> if (Prefs.builtInViewers) AppState.push(Screen.Video(f.absolutePath)) else Intents.openExternal(context, f)
                 FileType.PDF -> if (Prefs.builtInViewers) AppState.push(Screen.Pdf(f.absolutePath)) else Intents.openExternal(context, f)
                 FileType.DATABASE -> AppState.push(Screen.Sqlite(f.absolutePath))
-                FileType.DOCUMENT, FileType.FONT -> Intents.openExternal(context, f)
+                FileType.FONT -> AppState.push(Screen.Font(f.absolutePath))
+                FileType.DOCUMENT -> Intents.openExternal(context, f)
                 else -> Dialogs.show(DialogSpec.OpenAsChooser(f, pane, readOnly))
             }
         }

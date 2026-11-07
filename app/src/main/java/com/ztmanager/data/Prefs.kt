@@ -40,6 +40,8 @@ object Prefs {
     var useTrash by BoolPref("use_trash", true)
     var builtInViewers by BoolPref("builtin_viewers", true)
     var accent by IntPref("accent", 0)
+    var pinHash by StringPref("pin_hash", "")
+    var pinSalt by StringPref("pin_salt", "")
 
     // Editor
     var editorFontSize by IntPref("editor_font_size", 14)

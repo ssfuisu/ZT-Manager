@@ -7,6 +7,7 @@ import android.net.Uri
 import android.os.Build
 import android.os.Bundle
 import android.os.Environment
+import android.os.SystemClock
 import android.provider.OpenableColumns
 import android.provider.Settings
 import androidx.activity.compose.setContent
@@ -15,6 +16,7 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.lifecycleScope
+import com.ztmanager.data.AppLock
 import com.ztmanager.fs.FileType
 import com.ztmanager.ui.AppRoot
 import com.ztmanager.ui.AppState
@@ -39,6 +41,7 @@ class MainActivity : AppCompatActivity() {
         enableEdgeToEdge()
         super.onCreate(savedInstanceState)
         updatePermission()
+        if (AppLock.enabled && !AppState.unlockedOnce) AppState.locked = true
         setContent {
             ZtTheme {
                 AppRoot(onRequestPermission = { requestStorage() })
@@ -55,6 +58,20 @@ class MainActivity : AppCompatActivity() {
     override fun onNewIntent(intent: Intent) {
         super.onNewIntent(intent)
         handleIntent(intent)
+    }
+
+    override fun onStart() {
+        super.onStart()
+        val away = AppState.backgroundAt
+        if (AppLock.enabled && away > 0 && SystemClock.elapsedRealtime() - away > AppLock.RELOCK_AFTER_MS) {
+            AppState.locked = true
+        }
+        AppState.backgroundAt = 0
+    }
+
+    override fun onStop() {
+        super.onStop()
+        AppState.backgroundAt = SystemClock.elapsedRealtime()
     }
 
     override fun onResume() {

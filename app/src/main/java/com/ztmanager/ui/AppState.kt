@@ -32,6 +32,10 @@ sealed interface Screen {
     data object Trash : Screen
     data class Duplicates(val dir: String) : Screen
     data class Category(val kind: Int) : Screen
+    data object Share : Screen
+    data object TextTools : Screen
+    data object DeviceInfo : Screen
+    data class Font(val path: String) : Screen
     data object Settings : Screen
     data object About : Screen
 }
@@ -55,6 +59,9 @@ object AppState {
     val current: Screen get() = stack.last()
 
     var permissionGranted by mutableStateOf(false)
+    var locked by mutableStateOf(false)
+    var unlockedOnce = false
+    var backgroundAt = 0L
 
     fun push(screen: Screen) {
         stack.add(screen)

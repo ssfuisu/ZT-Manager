@@ -7,8 +7,8 @@ plugins {
     id("org.jetbrains.kotlin.plugin.compose")
 }
 
-val appVersionCode = 2
-val appVersionName = "1.1.0"
+val appVersionCode = 3
+val appVersionName = "1.2.0"
 
 fun envOrNull(name: String): String? = System.getenv(name)?.takeIf { it.isNotBlank() }
 

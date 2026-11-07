@@ -27,6 +27,7 @@ import androidx.compose.material.icons.filled.OpenInNew
 import androidx.compose.material.icons.filled.PieChart
 import androidx.compose.material.icons.filled.Share
 import androidx.compose.material.icons.filled.SwapHoriz
+import androidx.compose.material.icons.filled.Transform
 import androidx.compose.material.icons.filled.Unarchive
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.platform.LocalContext
@@ -34,6 +35,8 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.ztmanager.R
 import com.ztmanager.data.Prefs
+import com.ztmanager.apk.SplitInstaller
+import com.ztmanager.fs.ChecksumFiles
 import com.ztmanager.fs.FileCrypto
 import com.ztmanager.fs.FileEntry
 import com.ztmanager.fs.SplitTools
@@ -153,6 +156,12 @@ fun ContextMenuDialog(spec: DialogSpec.ContextMenu, onDismiss: () -> Unit) {
         if (!single.isDirectory && SplitTools.isFirstPart(f)) {
             actions += MenuAction(stringResource(R.string.action_merge), Icons.Filled.CallMerge) { Actions.merge(context, f) }
         }
+        if (!single.isDirectory && SplitInstaller.isBundle(f)) {
+            actions += MenuAction(stringResource(R.string.action_install_bundle), Icons.Filled.GetApp) { Actions.installBundle(context, f) }
+        }
+        if (!single.isDirectory && ChecksumFiles.isChecksumFile(f)) {
+            actions += MenuAction(stringResource(R.string.action_verify_checksums), Icons.Filled.Fingerprint) { Actions.verifyChecksums(context, f) }
+        }
         if (single.type == FileType.APK) {
             actions += MenuAction(stringResource(R.string.action_install), Icons.Filled.GetApp) { Intents.install(context, f) }
             actions += MenuAction(stringResource(R.string.action_apk_info), Icons.Filled.Android) {
@@ -222,6 +231,14 @@ fun ContextMenuDialog(spec: DialogSpec.ContextMenu, onDismiss: () -> Unit) {
             actions += MenuAction(stringResource(R.string.action_encrypt), Icons.Filled.EnhancedEncryption) {
                 Dialogs.show(DialogSpec.Crypto(pane, files, decrypt = false))
             }
+        }
+        if (entries.all { it.type == FileType.IMAGE }) {
+            actions += MenuAction(stringResource(R.string.action_convert_image), Icons.Filled.Transform) {
+                Dialogs.show(DialogSpec.ImageConvert(pane, files))
+            }
+        }
+        actions += MenuAction(stringResource(R.string.action_create_checksums), Icons.Filled.Fingerprint) {
+            Dialogs.show(DialogSpec.Checksum(pane, files))
         }
         if (single != null) {
             actions += MenuAction(stringResource(R.string.action_split), Icons.Filled.CallSplit) {

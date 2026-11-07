@@ -43,6 +43,10 @@ import com.ztmanager.ui.viewer.ImageViewerScreen
 import com.ztmanager.ui.viewer.PdfViewerScreen
 import com.ztmanager.ui.viewer.VideoPlayerScreen
 import com.ztmanager.ui.tools.CategoryScreen
+import com.ztmanager.ui.tools.DeviceInfoScreen
+import com.ztmanager.ui.tools.ShareScreen
+import com.ztmanager.ui.tools.TextToolsScreen
+import com.ztmanager.ui.viewer.FontViewerScreen
 import com.ztmanager.ui.tools.DuplicatesScreen
 import com.ztmanager.ui.tools.SqliteScreen
 import com.ztmanager.ui.tools.TrashScreen
@@ -54,6 +58,10 @@ fun AppRoot(onRequestPermission: () -> Unit) {
             .fillMaxSize()
             .background(MaterialTheme.colorScheme.background)
     ) {
+        if (AppState.locked) {
+            LockScreen()
+            return@Box
+        }
         if (!AppState.permissionGranted) {
             PermissionScreen(onRequestPermission)
             return@Box
@@ -81,6 +89,10 @@ fun AppRoot(onRequestPermission: () -> Unit) {
             Screen.Trash -> TrashScreen()
             is Screen.Duplicates -> DuplicatesScreen(screen.dir)
             is Screen.Category -> CategoryScreen(screen.kind)
+            Screen.Share -> ShareScreen()
+            Screen.TextTools -> TextToolsScreen()
+            Screen.DeviceInfo -> DeviceInfoScreen()
+            is Screen.Font -> FontViewerScreen(screen.path)
             Screen.Settings -> SettingsScreen()
             Screen.About -> AboutScreen()
         }

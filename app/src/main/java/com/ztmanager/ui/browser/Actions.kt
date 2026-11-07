@@ -9,7 +9,10 @@ import com.ztmanager.archive.CreateFormat
 import com.ztmanager.archive.ExtractContext
 import com.ztmanager.fs.FileEntry
 import com.ztmanager.data.Prefs
+import com.ztmanager.apk.SplitInstaller
+import com.ztmanager.fs.ChecksumFiles
 import com.ztmanager.fs.FileCrypto
+import com.ztmanager.fs.ImageTools
 import com.ztmanager.fs.FileOps
 import com.ztmanager.fs.SplitTools
 import com.ztmanager.fs.Trash
@@ -243,6 +246,66 @@ object Actions {
                 bad = handle.test(ExtractContext(this))
             } finally {
                 handle.close()
+            }
+        }
+    }
+
+    fun installBundle(context: Context, bundle: File) {
+        if (!SplitInstaller.ensurePermission(context)) return
+        val app = context.applicationContext
+        TaskManager.start(title = context.getString(R.string.task_install)) {
+            setMessage(bundle.name)
+            SplitInstaller.install(this, app, bundle)
+        }
+    }
+
+    fun convertImages(context: Context, files: List<File>, format: ImageTools.OutFormat, quality: Int, maxSide: Int, deleteSource: Boolean) {
+        TaskManager.start(
+            title = context.getString(R.string.task_convert),
+            successMessage = context.getString(R.string.msg_done),
+            onDone = { AppState.refreshAll() }
+        ) { ImageTools.convert(this, files, format, quality, maxSide, deleteSource) }
+    }
+
+    fun createChecksums(context: Context, files: List<File>, algo: String) {
+        TaskManager.start(
+            title = context.getString(R.string.task_checksum),
+            successMessage = context.getString(R.string.msg_done),
+            onDone = { AppState.refreshAll() }
+        ) { ChecksumFiles.create(this, files, algo) }
+    }
+
+    fun verifyChecksums(context: Context, listFile: File) {
+        var result: ChecksumFiles.VerifyResult? = null
+        val title = context.getString(R.string.action_verify_checksums)
+        TaskManager.start(
+            title = context.getString(R.string.task_checksum),
+            onDone = { err ->
+                val r = result
+                if (err == null && r != null) {
+                    val sb = StringBuilder(context.getString(R.string.verify_summary, r.ok.size, r.failed.size, r.missing.size))
+                    if (r.failed.isNotEmpty()) sb.append("\n\n").append(context.getString(R.string.verify_failed)).append("\n").append(r.failed.take(50).joinToString("\n"))
+                    if (r.missing.isNotEmpty()) sb.append("\n\n").append(context.getString(R.string.verify_missing)).append("\n").append(r.missing.take(50).joinToString("\n"))
+                    Dialogs.show(DialogSpec.Message(title, sb.toString()))
+                }
+            }
+        ) { result = ChecksumFiles.verify(this, listFile) }
+    }
+
+    fun compressEach(context: Context, files: List<File>, destDir: File, format: CreateFormat, level: Int, password: String?, deleteSource: Boolean) {
+        TaskManager.start(
+            title = context.getString(R.string.task_compress),
+            successMessage = context.getString(R.string.msg_compressed),
+            onDone = { AppState.refreshAll() }
+        ) {
+            files.forEachIndexed { i, f ->
+                checkCancelled()
+                val base = if (f.isFile && f.name.lastIndexOf('.') > 0) f.name.substringBeforeLast('.') else f.name
+                val out = FileOps.uniqueFile(destDir, base + "." + format.ext)
+                setMessage(out.name)
+                ArchiveCreator.create(this, listOf(f), out, format, level, password)
+                setItems(i + 1, files.size)
+                if (deleteSource) FileOps.deleteRecursive(f)
             }
         }
     }

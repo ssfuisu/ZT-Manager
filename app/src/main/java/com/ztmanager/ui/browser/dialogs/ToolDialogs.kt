@@ -160,3 +160,85 @@ fun SplitDialog(spec: DialogSpec.Split, onDismiss: () -> Unit) {
         dismissButton = { TextButton(onClick = onDismiss) { Text(stringResource(R.string.cancel)) } }
     )
 }
+
+@Composable
+fun ImageConvertDialog(spec: DialogSpec.ImageConvert, onDismiss: () -> Unit) {
+    val context = LocalContext.current
+    var format by remember { mutableStateOf(com.ztmanager.fs.ImageTools.OutFormat.JPEG) }
+    var quality by remember { mutableStateOf(85f) }
+    var maxSide by remember { mutableStateOf("0") }
+    var deleteSource by remember { mutableStateOf(false) }
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text(stringResource(R.string.action_convert_image)) },
+        text = {
+            Column(Modifier.verticalScroll(rememberScrollState())) {
+                Text(
+                    if (spec.files.size == 1) spec.files[0].name else stringResource(R.string.n_items, spec.files.size),
+                    style = MaterialTheme.typography.bodyMedium
+                )
+                Spacer(Modifier.height(8.dp))
+                Text(stringResource(R.string.archive_format), style = MaterialTheme.typography.labelLarge)
+                Row {
+                    com.ztmanager.fs.ImageTools.OutFormat.values().forEach { f ->
+                        FilterChip(selected = f == format, onClick = { format = f }, label = { Text(f.name) }, modifier = Modifier.padding(end = 6.dp))
+                    }
+                }
+                if (format != com.ztmanager.fs.ImageTools.OutFormat.PNG) {
+                    Text(stringResource(R.string.image_quality, quality.toInt()), style = MaterialTheme.typography.labelLarge)
+                    androidx.compose.material3.Slider(value = quality, onValueChange = { quality = it }, valueRange = 10f..100f)
+                }
+                OutlinedTextField(
+                    value = maxSide,
+                    onValueChange = { maxSide = it.filter { c -> c.isDigit() }.take(5) },
+                    label = { Text(stringResource(R.string.image_max_side)) },
+                    singleLine = true,
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                    modifier = Modifier.fillMaxWidth()
+                )
+                Row {
+                    listOf(0, 720, 1080, 1600, 2048).forEach { v ->
+                        TextButton(onClick = { maxSide = v.toString() }) { Text(if (v == 0) stringResource(R.string.original) else v.toString()) }
+                    }
+                }
+                CheckRow(stringResource(R.string.delete_original), deleteSource) { deleteSource = it }
+            }
+        },
+        confirmButton = {
+            TextButton(onClick = {
+                onDismiss()
+                spec.pane.clearSelection()
+                Actions.convertImages(context, spec.files, format, quality.toInt(), maxSide.toIntOrNull() ?: 0, deleteSource)
+            }) { Text(stringResource(R.string.ok)) }
+        },
+        dismissButton = { TextButton(onClick = onDismiss) { Text(stringResource(R.string.cancel)) } }
+    )
+}
+
+@Composable
+fun ChecksumDialog(spec: DialogSpec.Checksum, onDismiss: () -> Unit) {
+    val context = LocalContext.current
+    var algo by remember { mutableStateOf("SHA-256") }
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text(stringResource(R.string.action_create_checksums)) },
+        text = {
+            Column {
+                Text(
+                    if (spec.files.size == 1) spec.files[0].name + "." + (com.ztmanager.fs.ChecksumFiles.algorithms[algo] ?: "")
+                    else "checksums." + (com.ztmanager.fs.ChecksumFiles.algorithms[algo] ?: ""),
+                    style = MaterialTheme.typography.bodyMedium
+                )
+                com.ztmanager.fs.ChecksumFiles.algorithms.keys.forEach { a -> RadioRow(a, a == algo) { algo = a } }
+            }
+        },
+        confirmButton = {
+            TextButton(onClick = {
+                onDismiss()
+                spec.pane.clearSelection()
+                Actions.createChecksums(context, spec.files, algo)
+            }) { Text(stringResource(R.string.ok)) }
+        },
+        dismissButton = { TextButton(onClick = onDismiss) { Text(stringResource(R.string.cancel)) } }
+    )
+}

@@ -12,7 +12,7 @@ import java.nio.charset.Charset
 
 object ArchiveManager {
 
-    private val zipExt = setOf("zip", "jar", "apk", "aar", "apks", "xapk")
+    private val zipExt = setOf("zip", "jar", "apk", "aar", "apks", "xapk", "apkm")
     private val compressorFormats = setOf(ArchiveFormat.GZIP, ArchiveFormat.BZIP2, ArchiveFormat.LZMA, ArchiveFormat.Z)
 
     fun charset(): Charset = try {

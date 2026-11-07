@@ -47,6 +47,7 @@ import androidx.compose.ui.unit.dp
 import androidx.core.os.LocaleListCompat
 import com.ztmanager.R
 import com.ztmanager.archive.ArchiveManager
+import com.ztmanager.data.AppLock
 import com.ztmanager.data.Prefs
 import com.ztmanager.fs.RootShell
 import com.ztmanager.ui.AppState
@@ -139,6 +140,12 @@ fun SettingsScreen() {
                 }
             }
 
+            Header(stringResource(R.string.section_security))
+            Item(
+                stringResource(R.string.app_lock),
+                stringResource(if (AppLock.enabled) R.string.app_lock_on else R.string.app_lock_off)
+            ) { dialog = "pin" }
+
             Header(stringResource(R.string.section_editor))
             Column(Modifier.padding(horizontal = 20.dp, vertical = 6.dp)) {
                 Text(stringResource(R.string.font_size, Prefs.editorFontSize), style = MaterialTheme.typography.bodyLarge)
@@ -178,6 +185,8 @@ fun SettingsScreen() {
             Spacer(Modifier.padding(16.dp))
         }
     }
+
+    if (dialog == "pin") PinDialog { dialog = null }
 
     when (dialog) {
         "theme" -> ChoiceDialog(
@@ -273,4 +282,61 @@ private fun Toggle(title: String, summary: String?, checked: Boolean, onChange: 
         Spacer(Modifier.width(12.dp))
         Switch(checked = checked, onCheckedChange = onChange)
     }
+}
+
+@Composable
+private fun PinDialog(onDismiss: () -> Unit) {
+    var pin by remember { mutableStateOf("") }
+    var repeat by remember { mutableStateOf("") }
+    val valid = pin.length >= 4 && pin == repeat
+    val setMsg = stringResource(R.string.app_lock_set)
+    val removedMsg = stringResource(R.string.app_lock_removed)
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text(stringResource(R.string.app_lock)) },
+        text = {
+            Column {
+                Text(stringResource(R.string.app_lock_help), style = MaterialTheme.typography.bodySmall, color = ZtTheme.colors.secondaryText)
+                androidx.compose.material3.OutlinedTextField(
+                    value = pin,
+                    onValueChange = { pin = it.filter { c -> c.isDigit() }.take(12) },
+                    label = { Text(stringResource(R.string.lock_new_pin)) },
+                    singleLine = true,
+                    visualTransformation = androidx.compose.ui.text.input.PasswordVisualTransformation(),
+                    keyboardOptions = androidx.compose.foundation.text.KeyboardOptions(keyboardType = androidx.compose.ui.text.input.KeyboardType.NumberPassword),
+                    modifier = Modifier.fillMaxWidth()
+                )
+                androidx.compose.material3.OutlinedTextField(
+                    value = repeat,
+                    onValueChange = { repeat = it.filter { c -> c.isDigit() }.take(12) },
+                    label = { Text(stringResource(R.string.lock_repeat_pin)) },
+                    singleLine = true,
+                    isError = repeat.isNotEmpty() && repeat != pin,
+                    visualTransformation = androidx.compose.ui.text.input.PasswordVisualTransformation(),
+                    keyboardOptions = androidx.compose.foundation.text.KeyboardOptions(keyboardType = androidx.compose.ui.text.input.KeyboardType.NumberPassword),
+                    modifier = Modifier.fillMaxWidth()
+                )
+            }
+        },
+        confirmButton = {
+            TextButton(enabled = valid, onClick = {
+                AppLock.set(pin)
+                AppState.unlockedOnce = true
+                AppState.toast(setMsg)
+                onDismiss()
+            }) { Text(stringResource(R.string.ok)) }
+        },
+        dismissButton = {
+            Row {
+                if (AppLock.enabled) {
+                    TextButton(onClick = {
+                        AppLock.clear()
+                        AppState.toast(removedMsg)
+                        onDismiss()
+                    }) { Text(stringResource(R.string.app_lock_remove), color = MaterialTheme.colorScheme.error) }
+                }
+                TextButton(onClick = onDismiss) { Text(stringResource(R.string.cancel)) }
+            }
+        }
+    )
 }

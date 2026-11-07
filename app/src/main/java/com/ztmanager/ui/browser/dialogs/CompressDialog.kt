@@ -65,9 +65,10 @@ fun CompressDialog(spec: DialogSpec.Compress, onDismiss: () -> Unit) {
     var showPw by remember { mutableStateOf(false) }
     var deleteSource by remember { mutableStateOf(false) }
     var dest by remember { mutableStateOf(spec.destDir) }
+    var each by remember { mutableStateOf(false) }
     val pickTitle = stringResource(R.string.title_select_folder)
 
-    val formats = CreateFormat.values().filter { it.multiFile || singleFile }
+    val formats = CreateFormat.values().filter { it.multiFile || singleFile || (each && files.all { f -> f.isFile }) }
 
     AlertDialog(
         onDismissRequest = onDismiss,
@@ -136,6 +137,7 @@ fun CompressDialog(spec: DialogSpec.Compress, onDismiss: () -> Unit) {
                         Text(dest.path, style = MaterialTheme.typography.bodyMedium)
                     }
                 }
+                if (files.size > 1) CheckRow(stringResource(R.string.compress_each), each) { each = it }
                 CheckRow(stringResource(R.string.delete_after_compress), deleteSource) { deleteSource = it }
             }
         },
@@ -146,7 +148,12 @@ fun CompressDialog(spec: DialogSpec.Compress, onDismiss: () -> Unit) {
                 Prefs.compressionLevel = level.toInt()
                 onDismiss()
                 spec.pane.clearSelection()
-                Actions.compress(context, files, out, format, level.toInt(), password.ifEmpty { null }, deleteSource)
+                if (each && files.size > 1) {
+                    val fmt = if (format.multiFile || files.all { it.isFile }) format else CreateFormat.ZIP
+                    Actions.compressEach(context, files, dest, fmt, level.toInt(), password.ifEmpty { null }, deleteSource)
+                } else {
+                    Actions.compress(context, files, out, format, level.toInt(), password.ifEmpty { null }, deleteSource)
+                }
             }) { Text(stringResource(R.string.ok)) }
         },
         dismissButton = { TextButton(onClick = onDismiss) { Text(stringResource(R.string.cancel)) } }

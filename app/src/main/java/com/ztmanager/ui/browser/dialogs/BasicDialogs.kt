@@ -69,7 +69,10 @@ fun ArchiveTapDialog(spec: DialogSpec.ArchiveTap, onDismiss: () -> Unit) {
     val folder = Actions.folderNameFor(f)
     val other = AppState.panes[1 - spec.pane.index].currentDir
     val pick = stringResource(R.string.title_select_folder)
-    val actions = listOf(
+    val bundle = com.ztmanager.apk.SplitInstaller.isBundle(f)
+    val installLabel = stringResource(R.string.action_install_bundle)
+    val actions = listOfNotNull(
+        if (bundle) MenuAction(installLabel, Icons.Filled.GetApp) { Actions.installBundle(context, f) } else null,
         MenuAction(stringResource(R.string.action_browse_archive), Icons.Filled.Archive) { spec.pane.openArchive(f) },
         MenuAction(stringResource(R.string.action_extract_here), Icons.Filled.Unarchive) {
             Actions.extract(context, f, null, "", f.parentFile!!)

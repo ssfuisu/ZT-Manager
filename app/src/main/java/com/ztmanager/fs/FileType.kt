@@ -38,7 +38,7 @@ enum class FileType(val color: Color, val icon: ImageVector) {
         private val archiveExt = setOf(
             "zip", "7z", "rar", "tar", "gz", "tgz", "bz2", "tbz", "tbz2", "xz", "txz", "lzma",
             "iso", "cab", "arj", "lzh", "lha", "z", "cpio", "rpm", "deb", "wim", "xar", "jar",
-            "aar", "apks", "xapk", "obb", "001", "zipx", "chm", "udf", "dmg", "img", "ar"
+            "aar", "apks", "xapk", "apkm", "obb", "001", "zipx", "chm", "udf", "dmg", "img", "ar"
         )
         private val imageExt = setOf("jpg", "jpeg", "png", "gif", "bmp", "webp", "heic", "heif", "ico", "svg", "avif")
         private val videoExt = setOf("mp4", "mkv", "avi", "mov", "wmv", "flv", "webm", "3gp", "m4v", "ts", "mpg", "mpeg")

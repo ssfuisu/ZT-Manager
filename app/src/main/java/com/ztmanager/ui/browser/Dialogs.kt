@@ -15,6 +15,8 @@ import com.ztmanager.ui.browser.dialogs.ConflictDialog
 import com.ztmanager.ui.browser.dialogs.CryptoDialog
 import com.ztmanager.ui.browser.dialogs.MessageDialog
 import com.ztmanager.ui.browser.dialogs.SplitDialog
+import com.ztmanager.ui.browser.dialogs.ImageConvertDialog
+import com.ztmanager.ui.browser.dialogs.ChecksumDialog
 import com.ztmanager.ui.browser.dialogs.ContextMenuDialog
 import com.ztmanager.ui.browser.dialogs.DeleteDialog
 import com.ztmanager.ui.browser.dialogs.FolderPickerDialog
@@ -50,6 +52,8 @@ sealed class DialogSpec {
     class Message(val title: String, val message: String) : DialogSpec()
     class Crypto(val pane: PaneState, val files: List<File>, val decrypt: Boolean) : DialogSpec()
     class Split(val file: File) : DialogSpec()
+    class ImageConvert(val pane: PaneState, val files: List<File>) : DialogSpec()
+    class Checksum(val pane: PaneState, val files: List<File>) : DialogSpec()
 }
 
 object Dialogs {
@@ -89,6 +93,8 @@ fun DialogHost() {
             is DialogSpec.Message -> MessageDialog(spec, close)
             is DialogSpec.Crypto -> CryptoDialog(spec, close)
             is DialogSpec.Split -> SplitDialog(spec, close)
+            is DialogSpec.ImageConvert -> ImageConvertDialog(spec, close)
+            is DialogSpec.Checksum -> ChecksumDialog(spec, close)
         }
         }
     }

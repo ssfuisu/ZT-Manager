@@ -23,6 +23,7 @@ interface with a large set of power-user tools.
 - Categories: images, videos, music, documents, archives, APKs, recent and large files
 - Recent locations, range selection, home screen shortcuts for folders
 - Accent colors and light, dark and black themes
+- Optional PIN app lock
 
 ### Archives
 - Browse archives like folders: ZIP, 7z, RAR, RAR5, TAR, GZ, BZ2, XZ, TGZ, ISO, CAB,
@@ -35,6 +36,7 @@ interface with a large set of power-user tools.
 - Add files to and delete files from ZIP archives
 - Configurable ZIP file name encoding
 - Archive integrity test
+- Compress every selected item into its own archive
 
 ### Tools
 - Text editor: line numbers, syntax highlighting, undo and redo, find and replace
@@ -47,14 +49,22 @@ interface with a large set of power-user tools.
 - SQLite database editor: browse tables page by page and run SQL statements
 - APK tools: package details, SDK levels, ABIs, signatures (MD5, SHA-1, SHA-256),
   permissions and components, decoded `AndroidManifest.xml`, install
-- App manager: list user and system apps, launch, backup APK (split APKs as `.apks`),
-  share, open app settings, uninstall
+- App manager: list user and system apps, sort by name, size, install or update date,
+  launch, backup APK (split APKs as `.apks`), share, open app settings, uninstall
+- Split APK installer for `.apks`, `.xapk` and `.apkm` bundles
+- Wi-Fi share: built-in web server to browse, download (also folders as ZIP) and upload
+  files from any browser on the same network, with optional password
 - Checksums: MD5, SHA-1, SHA-256, SHA-512 and CRC32 with compare
 - File search by name (wildcards) and content
 - Storage analyzer showing the largest folders and files
 - Duplicate file finder (size, partial hash and full hash comparison)
 - File encryption with a password (AES-256-CTR with HMAC-SHA256, PBKDF2 key derivation)
 - Split files into parts and merge them again
+- Image converter and resizer (JPEG, PNG, WEBP, quality and size, EXIF rotation)
+- Checksum files: create and verify `.md5`, `.sha1`, `.sha256` and `.sha512` lists
+- Text tools: Base64, URL, Hex and Unicode escapes, hashes, JSON format and minify,
+  case conversion and line tools
+- Font viewer and device info
 - Text compare (line diff) for two files
 - Terminal with `sh` or `su`
 
