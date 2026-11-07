@@ -144,7 +144,7 @@ dependencies {
     // Archives
     implementation("net.lingala.zip4j:zip4j:2.11.5")
     implementation("org.apache.commons:commons-compress:1.27.1")
-    implementation("org.tukaani:xz:1.10")
+    implementation("org.tukaani:xz:1.12")
     implementation("com.github.omicronapps:7-Zip-JBinding-4Android:Release-16.02-2.03")
 
     // APK signing and verification
