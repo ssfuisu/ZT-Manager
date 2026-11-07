@@ -20,6 +20,7 @@ import com.ztmanager.ui.AppRoot
 import com.ztmanager.ui.AppState
 import com.ztmanager.ui.Screen
 import com.ztmanager.ui.browser.Opener
+import com.ztmanager.ui.common.Shortcuts
 import com.ztmanager.ui.theme.ZtTheme
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -94,6 +95,12 @@ class MainActivity : AppCompatActivity() {
 
     /** Opens files sent from other apps (archives, texts, APKs). */
     private fun handleIntent(intent: Intent?) {
+        if (intent?.action == Shortcuts.ACTION_OPEN_DIR) {
+            val path = intent.getStringExtra(Shortcuts.EXTRA_PATH) ?: return
+            AppState.stack.retainAll { it == Screen.Browser }
+            if (File(path).isDirectory) AppState.active.navigate(path)
+            return
+        }
         if (intent?.action != Intent.ACTION_VIEW) return
         val uri = intent.data ?: return
         lifecycleScope.launch {

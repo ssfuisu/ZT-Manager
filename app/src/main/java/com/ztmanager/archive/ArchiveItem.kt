@@ -31,6 +31,9 @@ interface ArchiveHandle : Closeable {
      */
     suspend fun extract(items: List<ArchiveItem>, destDir: File, stripPrefix: String, ctx: ExtractContext)
 
+    /** Verifies all entries. Returns the paths of damaged entries (empty when the archive is fine). */
+    suspend fun test(ctx: ExtractContext): List<String>
+
     fun addFiles(files: List<File>, innerDir: String, ctx: ExtractContext) {
         throw UnsupportedOperationException("Read-only archive")
     }

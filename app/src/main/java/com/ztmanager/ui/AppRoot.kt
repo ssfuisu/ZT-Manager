@@ -38,7 +38,14 @@ import com.ztmanager.ui.tools.DiffScreen
 import com.ztmanager.ui.tools.SearchScreen
 import com.ztmanager.ui.tools.TerminalScreen
 import com.ztmanager.ui.tools.TextViewScreen
+import com.ztmanager.ui.viewer.AudioPlayerScreen
 import com.ztmanager.ui.viewer.ImageViewerScreen
+import com.ztmanager.ui.viewer.PdfViewerScreen
+import com.ztmanager.ui.viewer.VideoPlayerScreen
+import com.ztmanager.ui.tools.CategoryScreen
+import com.ztmanager.ui.tools.DuplicatesScreen
+import com.ztmanager.ui.tools.SqliteScreen
+import com.ztmanager.ui.tools.TrashScreen
 
 @Composable
 fun AppRoot(onRequestPermission: () -> Unit) {
@@ -67,6 +74,13 @@ fun AppRoot(onRequestPermission: () -> Unit) {
             is Screen.Analyzer -> AnalyzerScreen(screen.dir)
             is Screen.Diff -> DiffScreen(screen.a, screen.b)
             is Screen.TextView -> TextViewScreen(screen.title, screen.text)
+            is Screen.Audio -> AudioPlayerScreen(screen.path)
+            is Screen.Video -> VideoPlayerScreen(screen.path)
+            is Screen.Pdf -> PdfViewerScreen(screen.path)
+            is Screen.Sqlite -> SqliteScreen(screen.path)
+            Screen.Trash -> TrashScreen()
+            is Screen.Duplicates -> DuplicatesScreen(screen.dir)
+            is Screen.Category -> CategoryScreen(screen.kind)
             Screen.Settings -> SettingsScreen()
             Screen.About -> AboutScreen()
         }

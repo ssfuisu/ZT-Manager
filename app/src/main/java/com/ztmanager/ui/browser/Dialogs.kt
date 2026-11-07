@@ -12,6 +12,9 @@ import com.ztmanager.ui.browser.dialogs.BatchRenameDialog
 import com.ztmanager.ui.browser.dialogs.CompressDialog
 import com.ztmanager.ui.browser.dialogs.ConfirmDialog
 import com.ztmanager.ui.browser.dialogs.ConflictDialog
+import com.ztmanager.ui.browser.dialogs.CryptoDialog
+import com.ztmanager.ui.browser.dialogs.MessageDialog
+import com.ztmanager.ui.browser.dialogs.SplitDialog
 import com.ztmanager.ui.browser.dialogs.ContextMenuDialog
 import com.ztmanager.ui.browser.dialogs.DeleteDialog
 import com.ztmanager.ui.browser.dialogs.FolderPickerDialog
@@ -44,6 +47,9 @@ sealed class DialogSpec {
     data object Sort : DialogSpec()
     class Input(val title: String, val initial: String, val hint: String = "", val onOk: (String) -> Unit) : DialogSpec()
     class Confirm(val title: String, val message: String, val onOk: () -> Unit) : DialogSpec()
+    class Message(val title: String, val message: String) : DialogSpec()
+    class Crypto(val pane: PaneState, val files: List<File>, val decrypt: Boolean) : DialogSpec()
+    class Split(val file: File) : DialogSpec()
 }
 
 object Dialogs {
@@ -80,6 +86,9 @@ fun DialogHost() {
             is DialogSpec.Sort -> SortDialog(close)
             is DialogSpec.Input -> InputDialog(spec, close)
             is DialogSpec.Confirm -> ConfirmDialog(spec, close)
+            is DialogSpec.Message -> MessageDialog(spec, close)
+            is DialogSpec.Crypto -> CryptoDialog(spec, close)
+            is DialogSpec.Split -> SplitDialog(spec, close)
         }
         }
     }

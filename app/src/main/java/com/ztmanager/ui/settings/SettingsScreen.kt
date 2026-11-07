@@ -1,7 +1,16 @@
 package com.ztmanager.ui.settings
 
 import androidx.appcompat.app.AppCompatDelegate
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.material.icons.filled.Check
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
+import com.ztmanager.ui.theme.ACCENTS
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -79,6 +88,27 @@ fun SettingsScreen() {
                 stringResource(R.string.theme_dark), stringResource(R.string.theme_black)
             )
             Item(stringResource(R.string.theme), themeNames[Prefs.themeMode.coerceIn(0, 3)]) { dialog = "theme" }
+            Column(Modifier.padding(horizontal = 20.dp, vertical = 10.dp)) {
+                Text(stringResource(R.string.accent_color), style = MaterialTheme.typography.bodyLarge)
+                Spacer(Modifier.height(8.dp))
+                Row {
+                    val dark = ZtTheme.colors.isDark
+                    ACCENTS.forEachIndexed { i, pair ->
+                        val c = if (dark) pair.first else pair.second
+                        Box(
+                            contentAlignment = Alignment.Center,
+                            modifier = Modifier
+                                .padding(end = 10.dp)
+                                .size(36.dp)
+                                .clip(CircleShape)
+                                .background(c)
+                                .clickable { Prefs.accent = i }
+                        ) {
+                            if (Prefs.accent == i) Icon(Icons.Filled.Check, null, tint = Color.White)
+                        }
+                    }
+                }
+            }
             val langLabel = LANGUAGES.firstOrNull { it.first == currentLang }?.second ?: R.string.language_system
             Item(stringResource(R.string.language), stringResource(langLabel)) { dialog = "language" }
 
@@ -91,6 +121,8 @@ fun SettingsScreen() {
                 AppState.refreshAll()
             }
             Toggle(stringResource(R.string.confirm_delete), null, Prefs.confirmDelete) { Prefs.confirmDelete = it }
+            Toggle(stringResource(R.string.use_trash), stringResource(R.string.use_trash_summary), Prefs.useTrash) { Prefs.useTrash = it }
+            Toggle(stringResource(R.string.builtin_viewers), stringResource(R.string.builtin_viewers_summary), Prefs.builtInViewers) { Prefs.builtInViewers = it }
             Toggle(stringResource(R.string.single_pane), stringResource(R.string.single_pane_summary), Prefs.singlePane) { Prefs.singlePane = it }
             Toggle(stringResource(R.string.grid_view), null, Prefs.gridView) { Prefs.gridView = it }
             Toggle(stringResource(R.string.root_mode), stringResource(R.string.root_mode_summary), Prefs.rootMode) { on ->
@@ -120,6 +152,7 @@ fun SettingsScreen() {
             Toggle(stringResource(R.string.word_wrap), null, Prefs.editorWordWrap) { Prefs.editorWordWrap = it }
             Toggle(stringResource(R.string.line_numbers), null, Prefs.editorLineNumbers) { Prefs.editorLineNumbers = it }
             Toggle(stringResource(R.string.syntax_highlight), null, Prefs.editorHighlight) { Prefs.editorHighlight = it }
+            Toggle(stringResource(R.string.auto_indent), null, Prefs.editorAutoIndent) { Prefs.editorAutoIndent = it }
 
             Header(stringResource(R.string.section_archives))
             Column(Modifier.padding(horizontal = 20.dp, vertical = 6.dp)) {
@@ -132,6 +165,10 @@ fun SettingsScreen() {
                 )
             }
             Item(stringResource(R.string.zip_encoding), Prefs.archiveCharset) { dialog = "charset" }
+            Item(stringResource(R.string.clear_recent), null) {
+                Prefs.clearRecent()
+                AppState.toast(cacheCleared)
+            }
             Item(stringResource(R.string.clear_cache), stringResource(R.string.clear_cache_summary)) {
                 AppState.scope.launch {
                     withContext(Dispatchers.IO) { ArchiveManager.clearCache() }

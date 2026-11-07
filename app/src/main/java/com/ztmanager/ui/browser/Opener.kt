@@ -17,7 +17,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.io.File
 
-enum class OpenAs { TEXT, HEX, IMAGE, ARCHIVE, APK, EXTERNAL }
+enum class OpenAs { TEXT, HEX, IMAGE, ARCHIVE, APK, AUDIO, VIDEO, PDF, SQLITE, EXTERNAL }
 
 object Opener {
 
@@ -65,8 +65,11 @@ object Opener {
                 FileType.APK -> Dialogs.show(DialogSpec.ApkTap(f, pane, fromArchive))
                 FileType.IMAGE -> AppState.push(Screen.Images(f.absolutePath))
                 FileType.TEXT, FileType.CODE -> AppState.push(Screen.Editor(f.absolutePath, readOnly))
-                FileType.VIDEO, FileType.AUDIO, FileType.PDF, FileType.DOCUMENT, FileType.FONT ->
-                    Intents.openExternal(context, f)
+                FileType.AUDIO -> if (Prefs.builtInViewers) AppState.push(Screen.Audio(f.absolutePath)) else Intents.openExternal(context, f)
+                FileType.VIDEO -> if (Prefs.builtInViewers) AppState.push(Screen.Video(f.absolutePath)) else Intents.openExternal(context, f)
+                FileType.PDF -> if (Prefs.builtInViewers) AppState.push(Screen.Pdf(f.absolutePath)) else Intents.openExternal(context, f)
+                FileType.DATABASE -> AppState.push(Screen.Sqlite(f.absolutePath))
+                FileType.DOCUMENT, FileType.FONT -> Intents.openExternal(context, f)
                 else -> Dialogs.show(DialogSpec.OpenAsChooser(f, pane, readOnly))
             }
         }
@@ -79,6 +82,10 @@ object Opener {
             OpenAs.IMAGE -> AppState.push(Screen.Images(file.absolutePath))
             OpenAs.ARCHIVE -> pane.openArchive(file)
             OpenAs.APK -> AppState.push(Screen.ApkInfo(file.absolutePath))
+            OpenAs.AUDIO -> AppState.push(Screen.Audio(file.absolutePath))
+            OpenAs.VIDEO -> AppState.push(Screen.Video(file.absolutePath))
+            OpenAs.PDF -> AppState.push(Screen.Pdf(file.absolutePath))
+            OpenAs.SQLITE -> AppState.push(Screen.Sqlite(file.absolutePath))
             OpenAs.EXTERNAL -> Intents.openExternal(context, file, "*/*")
         }
     }

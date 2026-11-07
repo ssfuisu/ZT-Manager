@@ -25,6 +25,13 @@ sealed interface Screen {
     data class Analyzer(val dir: String) : Screen
     data class Diff(val a: String, val b: String) : Screen
     data class TextView(val title: String, val text: String) : Screen
+    data class Audio(val path: String) : Screen
+    data class Video(val path: String) : Screen
+    data class Pdf(val path: String) : Screen
+    data class Sqlite(val path: String) : Screen
+    data object Trash : Screen
+    data class Duplicates(val dir: String) : Screen
+    data class Category(val kind: Int) : Screen
     data object Settings : Screen
     data object About : Screen
 }

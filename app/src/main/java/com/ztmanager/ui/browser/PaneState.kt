@@ -113,6 +113,7 @@ class PaneState(val index: Int, initialPath: String) {
         selection = emptySet()
         filter = ""
         if (index == 0) Prefs.leftPath = path else Prefs.rightPath = path
+        Prefs.addRecent(path)
         load()
     }
 
@@ -233,6 +234,14 @@ class PaneState(val index: Int, initialPath: String) {
 
     fun invertSelection() {
         selection = visible.map { it.path }.filter { it !in selection }.toSet()
+    }
+
+    /** Selects every entry between the first and the last selected one. */
+    fun selectRange() {
+        val list = visible
+        val idx = list.indices.filter { list[it].path in selection }
+        if (idx.size < 2) return
+        selection = selection + list.subList(idx.first(), idx.last() + 1).map { it.path }
     }
 
     fun clearSelection() {

@@ -30,6 +30,19 @@ object Intents {
         }
     }
 
+    /** "Set as" chooser (wallpaper, contact photo ...). */
+    fun setAs(context: Context, file: File) {
+        try {
+            val intent = Intent(Intent.ACTION_ATTACH_DATA)
+                .setDataAndType(uri(context, file), FileType.mimeOf(file.name))
+                .putExtra("mimeType", FileType.mimeOf(file.name))
+                .addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+            context.startActivity(Intent.createChooser(intent, context.getString(R.string.action_set_as)))
+        } catch (e: Exception) {
+            AppState.toast(e.message)
+        }
+    }
+
     fun share(context: Context, files: List<File>) {
         if (files.isEmpty()) return
         try {

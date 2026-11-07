@@ -36,12 +36,17 @@ object Prefs {
     var leftPath by StringPref("left_path", "")
     var rightPath by StringPref("right_path", "")
     var bookmarksRaw by StringPref("bookmarks", "")
+    var recentRaw by StringPref("recent_dirs", "")
+    var useTrash by BoolPref("use_trash", true)
+    var builtInViewers by BoolPref("builtin_viewers", true)
+    var accent by IntPref("accent", 0)
 
     // Editor
     var editorFontSize by IntPref("editor_font_size", 14)
     var editorWordWrap by BoolPref("editor_word_wrap", false)
     var editorLineNumbers by BoolPref("editor_line_numbers", true)
     var editorHighlight by BoolPref("editor_highlight", true)
+    var editorAutoIndent by BoolPref("editor_auto_indent", true)
 
     // Archives
     var compressionLevel by IntPref("compression_level", 5)
@@ -52,6 +57,17 @@ object Prefs {
 
     fun addBookmark(path: String) {
         if (path !in bookmarks) bookmarksRaw = (bookmarks + path).joinToString("\n")
+    }
+
+    val recentDirs: List<String>
+        get() = recentRaw.split('\n').filter { it.isNotBlank() }
+
+    fun addRecent(path: String) {
+        recentRaw = (listOf(path) + recentDirs.filter { it != path }).take(10).joinToString("\n")
+    }
+
+    fun clearRecent() {
+        recentRaw = ""
     }
 
     fun removeBookmark(path: String) {

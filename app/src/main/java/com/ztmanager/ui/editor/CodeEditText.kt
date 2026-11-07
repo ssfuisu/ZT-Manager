@@ -41,6 +41,8 @@ class CodeEditText(context: Context) : AppCompatEditText(context) {
     private val gutterPad = dp(6f)
 
     var onTextEdited: (() -> Unit)? = null
+    var autoIndent: Boolean = true
+    private var pendingIndent: Pair<Int, String>? = null
     var onCursorMoved: ((Int) -> Unit)? = null
     private var editableKeyListener: KeyListener? = null
 
@@ -87,9 +89,22 @@ class CodeEditText(context: Context) : AppCompatEditText(context) {
                 }
                 if (logicalLines.toString().length != oldDigits) post { updateGutter() }
                 if (!applying) record(start, pendingBefore, s.subSequence(start, start + count).toString())
+                // keep the indentation of the previous line when Enter is pressed
+                if (!applying && autoIndent && !readOnly && count == 1 && before == 0 && s[start] == '\n') {
+                    var lineStart = start
+                    while (lineStart > 0 && s[lineStart - 1] != '\n') lineStart--
+                    var end = lineStart
+                    while (end < start && (s[end] == ' ' || s[end] == '\t')) end++
+                    if (end > lineStart) pendingIndent = (start + 1) to s.subSequence(lineStart, end).toString()
+                }
             }
 
             override fun afterTextChanged(s: Editable) {
+                val indent = pendingIndent
+                if (indent != null) {
+                    pendingIndent = null
+                    if (indent.first <= s.length) s.insert(indent.first, indent.second)
+                }
                 onTextEdited?.invoke()
             }
         })

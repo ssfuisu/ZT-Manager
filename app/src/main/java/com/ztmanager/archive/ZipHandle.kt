@@ -103,6 +103,37 @@ class ZipHandle(override val file: File, charset: Charset) : ArchiveHandle {
         ctx.setItems(items.size, items.size)
     }
 
+    override suspend fun test(ctx: ExtractContext): List<String> {
+        val bad = ArrayList<String>()
+        ctx.setTotal(items.sumOf { if (it.isDir) 0L else it.size.coerceAtLeast(0) })
+        val buf = ByteArray(128 * 1024)
+        items.forEachIndexed { i, item ->
+            ctx.checkCancelled()
+            ctx.setItems(i, items.size)
+            if (item.isDir) return@forEachIndexed
+            ctx.setMessage(item.name)
+            val header = headers[item.index]
+            if (header.isEncrypted && password == null) {
+                val pw = ctx.askPassword(file.name, false) ?: throw CancellationException()
+                setPassword(pw)
+            }
+            try {
+                // zip4j verifies the CRC when the entry stream reaches its end
+                zip.getInputStream(header).use { input ->
+                    while (true) {
+                        val n = input.read(buf)
+                        if (n < 0) break
+                        ctx.addBytes(n.toLong())
+                    }
+                }
+            } catch (e: Exception) {
+                if (e is CancellationException) throw e
+                bad.add(item.path)
+            }
+        }
+        return bad
+    }
+
     override fun addFiles(files: List<File>, innerDir: String, ctx: ExtractContext) {
         val params = ZipParameters().apply {
             if (innerDir.isNotEmpty()) rootFolderNameInZip = innerDir

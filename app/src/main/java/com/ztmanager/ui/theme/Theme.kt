@@ -121,6 +121,17 @@ private val lightScheme = lightColorScheme(
     error = Color(0xFFD32F2F)
 )
 
+/** Accent colors as (dark theme, light theme) pairs. */
+val ACCENTS = listOf(
+    Color(0xFF4DA3FF) to Color(0xFF1E6FD9),
+    Color(0xFF4CC38A) to Color(0xFF1B8A5A),
+    Color(0xFFFFA24D) to Color(0xFFD9700E),
+    Color(0xFFB18CFF) to Color(0xFF6A3FD1),
+    Color(0xFFFF6B6B) to Color(0xFFC62828),
+    Color(0xFF3ECFCF) to Color(0xFF00838F),
+    Color(0xFFF06292) to Color(0xFFC2185B)
+)
+
 val LocalZtColors = staticCompositionLocalOf { darkZt }
 
 object ZtTheme {
@@ -139,16 +150,27 @@ fun isAppInDarkTheme(): Boolean = when (Prefs.themeMode) {
 fun ZtTheme(content: @Composable () -> Unit) {
     val dark = isAppInDarkTheme()
     val black = Prefs.themeMode == Prefs.THEME_BLACK
-    val scheme = when {
+    val accentPair = ACCENTS[Prefs.accent.coerceIn(0, ACCENTS.lastIndex)]
+    val accent = if (dark) accentPair.first else accentPair.second
+    val baseScheme = when {
         black -> blackScheme
         dark -> darkScheme
         else -> lightScheme
     }
-    val zt = when {
+    val scheme = baseScheme.copy(
+        primary = accent,
+        primaryContainer = accent.copy(alpha = if (dark) 0.30f else 0.18f),
+        surfaceTint = accent
+    )
+    val baseZt = when {
         black -> blackZt
         dark -> darkZt
         else -> lightZt
     }
+    val zt = baseZt.copy(
+        activePaneMarker = accent,
+        selection = accent.copy(alpha = if (dark) 0.20f else 0.15f)
+    )
     val context = LocalContext.current
     LaunchedEffect(dark) {
         val activity = context as? ComponentActivity ?: return@LaunchedEffect

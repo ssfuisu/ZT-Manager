@@ -8,7 +8,11 @@ import com.ztmanager.archive.ArchiveTree
 import com.ztmanager.archive.CreateFormat
 import com.ztmanager.archive.ExtractContext
 import com.ztmanager.fs.FileEntry
+import com.ztmanager.data.Prefs
+import com.ztmanager.fs.FileCrypto
 import com.ztmanager.fs.FileOps
+import com.ztmanager.fs.SplitTools
+import com.ztmanager.fs.Trash
 import com.ztmanager.task.TaskManager
 import com.ztmanager.ui.AppState
 import com.ztmanager.ui.FileClipboard
@@ -69,7 +73,7 @@ object Actions {
         }
     }
 
-    fun delete(context: Context, pane: PaneState, entries: List<FileEntry>) {
+    fun delete(context: Context, pane: PaneState, entries: List<FileEntry>, permanent: Boolean = !Prefs.useTrash) {
         if (entries.isEmpty()) return
         pane.clearSelection()
         if (entries.first().inArchive) {
@@ -89,12 +93,13 @@ object Actions {
             return
         }
         val files = entries.map { File(it.path) }
+        val toTrash = !permanent && files.all { Trash.supports(it) }
         TaskManager.start(
-            title = context.getString(R.string.task_delete),
-            successMessage = context.getString(R.string.msg_deleted),
+            title = context.getString(if (toTrash) R.string.task_trash else R.string.task_delete),
+            successMessage = context.getString(if (toTrash) R.string.msg_moved_to_trash else R.string.msg_deleted),
             onDone = { AppState.refreshAll() }
         ) {
-            FileOps.delete(this, files)
+            if (toTrash) Trash.moveToTrash(this, files) else FileOps.delete(this, files)
         }
     }
 
@@ -169,6 +174,76 @@ object Actions {
             setMessage(output.name)
             ArchiveCreator.create(this, files, output, format, level, password)
             if (deleteSource) files.forEach { FileOps.deleteRecursive(it) }
+        }
+    }
+
+    fun encrypt(context: Context, files: List<File>, password: String, deleteSource: Boolean) {
+        TaskManager.start(
+            title = context.getString(R.string.task_encrypt),
+            successMessage = context.getString(R.string.msg_encrypted),
+            onDone = { AppState.refreshAll() }
+        ) {
+            files.forEachIndexed { i, f ->
+                setItems(i, files.size)
+                FileCrypto.encrypt(this, f, password, deleteSource)
+            }
+        }
+    }
+
+    fun decrypt(context: Context, files: List<File>, password: String, deleteSource: Boolean) {
+        val wrong = context.getString(R.string.wrong_password)
+        TaskManager.start(
+            title = context.getString(R.string.task_decrypt),
+            successMessage = context.getString(R.string.msg_decrypted),
+            onDone = { AppState.refreshAll() }
+        ) {
+            files.forEachIndexed { i, f ->
+                setItems(i, files.size)
+                try {
+                    FileCrypto.decrypt(this, f, password, deleteSource)
+                } catch (e: FileCrypto.WrongPasswordException) {
+                    throw java.io.IOException(wrong)
+                }
+            }
+        }
+    }
+
+    fun split(context: Context, file: File, partSize: Long) {
+        TaskManager.start(
+            title = context.getString(R.string.task_split),
+            successMessage = context.getString(R.string.msg_done),
+            onDone = { AppState.refreshAll() }
+        ) { SplitTools.split(this, file, partSize) }
+    }
+
+    fun merge(context: Context, first: File) {
+        TaskManager.start(
+            title = context.getString(R.string.task_merge),
+            successMessage = context.getString(R.string.msg_done),
+            onDone = { AppState.refreshAll() }
+        ) { SplitTools.merge(this, first) }
+    }
+
+    fun testArchive(context: Context, archive: File) {
+        var bad: List<String> = emptyList()
+        val title = context.getString(R.string.action_test_archive)
+        TaskManager.start(
+            title = context.getString(R.string.task_test),
+            onDone = { err ->
+                if (err == null) {
+                    val msg = if (bad.isEmpty()) context.getString(R.string.test_ok, archive.name)
+                    else context.getString(R.string.test_failed, bad.size) + "\n\n" + bad.take(50).joinToString("\n")
+                    Dialogs.show(DialogSpec.Message(title, msg))
+                }
+            }
+        ) {
+            setMessage(archive.name)
+            val handle = ArchiveManager.openInteractive(archive)
+            try {
+                bad = handle.test(ExtractContext(this))
+            } finally {
+                handle.close()
+            }
         }
     }
 }

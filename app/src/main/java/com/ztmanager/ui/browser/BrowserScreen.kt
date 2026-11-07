@@ -34,6 +34,7 @@ import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.SelectAll
 import androidx.compose.material.icons.filled.Unarchive
+import androidx.compose.material.icons.filled.UnfoldMore
 import androidx.compose.material3.Button
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.DrawerValue
@@ -179,6 +180,9 @@ private fun BrowserTopBar(pane: PaneState, onMenu: () -> Unit) {
             if (selecting) {
                 IconButton(onClick = { pane.selectAll() }) { Icon(Icons.Filled.SelectAll, stringResource(R.string.select_all)) }
                 IconButton(onClick = { pane.invertSelection() }) { Icon(Icons.Filled.FlipToBack, stringResource(R.string.invert_selection)) }
+                if (pane.selection.size >= 2) {
+                    IconButton(onClick = { pane.selectRange() }) { Icon(Icons.Filled.UnfoldMore, stringResource(R.string.select_range)) }
+                }
             } else {
                 IconButton(onClick = { FilterState.visibleFor = if (FilterState.visibleFor == pane.index) -1 else pane.index }) {
                     Icon(Icons.Filled.FilterList, stringResource(R.string.filter_hint))
@@ -243,6 +247,7 @@ private fun BrowserTopBar(pane: PaneState, onMenu: () -> Unit) {
                     item(stringResource(R.string.tool_search)) { AppState.push(Screen.Search(dir.path)) }()
                     item(stringResource(R.string.tool_analyzer)) { AppState.push(Screen.Analyzer(dir.path)) }()
                 }
+                item(stringResource(R.string.tool_trash)) { AppState.push(Screen.Trash) }()
                 item(stringResource(R.string.settings)) { AppState.push(Screen.Settings) }()
             }
         }

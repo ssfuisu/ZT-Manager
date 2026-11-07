@@ -1,7 +1,15 @@
 package com.ztmanager.ui.browser
 
 import android.os.Environment
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.FileCopy
+import androidx.compose.material.icons.filled.History
+import androidx.compose.ui.draw.clip
+import com.ztmanager.ui.tools.Categories
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -70,6 +78,33 @@ fun AppDrawer(onClose: () -> Unit) {
                 Text(stringResource(R.string.app_name), style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
                 Text("v" + BuildConfig.VERSION_NAME, style = MaterialTheme.typography.bodySmall, color = ZtTheme.colors.secondaryText)
             }
+            Section(stringResource(R.string.section_categories))
+            Categories.all.chunked(4).forEach { row ->
+                Row(Modifier.fillMaxWidth().padding(horizontal = 12.dp)) {
+                    row.forEach { k ->
+                        Column(
+                            horizontalAlignment = Alignment.CenterHorizontally,
+                            modifier = Modifier
+                                .weight(1f)
+                                .clip(RoundedCornerShape(12.dp))
+                                .clickable { onClose(); AppState.push(Screen.Category(k)) }
+                                .padding(vertical = 8.dp)
+                        ) {
+                            Box(
+                                Modifier
+                                    .size(40.dp)
+                                    .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.15f), RoundedCornerShape(12.dp)),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Icon(Categories.icon(k), null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(22.dp))
+                            }
+                            Spacer(Modifier.height(4.dp))
+                            Text(stringResource(Categories.label(k)), style = MaterialTheme.typography.labelSmall, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                        }
+                    }
+                }
+            }
+            HorizontalDivider(Modifier.padding(vertical = 6.dp), color = ZtTheme.colors.divider)
             Section(stringResource(R.string.section_storage))
             volumes.forEach { v ->
                 val used = (v.total - v.free).coerceAtLeast(0)
@@ -133,12 +168,23 @@ fun AppDrawer(onClose: () -> Unit) {
                 }
             }
 
+            val recent = Prefs.recentDirs.drop(1).take(5)
+            if (recent.isNotEmpty()) {
+                HorizontalDivider(Modifier.padding(vertical = 6.dp), color = ZtTheme.colors.divider)
+                Section(stringResource(R.string.section_recent))
+                recent.forEach { r ->
+                    DrawerItem(Icons.Filled.History, File(r).name.ifEmpty { r }, subtitle = r) { go(r) }
+                }
+            }
+
             HorizontalDivider(Modifier.padding(vertical = 6.dp), color = ZtTheme.colors.divider)
             Section(stringResource(R.string.section_tools))
             val dir = AppState.active.currentDir?.path ?: root
             DrawerItem(Icons.Filled.Apps, stringResource(R.string.tool_apps)) { onClose(); AppState.push(Screen.Apps) }
             DrawerItem(Icons.Filled.Search, stringResource(R.string.tool_search)) { onClose(); AppState.push(Screen.Search(dir)) }
             DrawerItem(Icons.Filled.PieChart, stringResource(R.string.tool_analyzer)) { onClose(); AppState.push(Screen.Analyzer(dir)) }
+            DrawerItem(Icons.Filled.FileCopy, stringResource(R.string.tool_duplicates)) { onClose(); AppState.push(Screen.Duplicates(dir)) }
+            DrawerItem(Icons.Filled.Delete, stringResource(R.string.tool_trash)) { onClose(); AppState.push(Screen.Trash) }
             DrawerItem(Icons.Filled.Code, stringResource(R.string.tool_terminal)) { onClose(); AppState.push(Screen.Terminal) }
             DrawerItem(Icons.Filled.Memory, stringResource(R.string.tool_text_editor)) {
                 onClose()

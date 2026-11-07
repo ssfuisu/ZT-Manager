@@ -16,6 +16,10 @@ import androidx.compose.material.icons.filled.Code
 import androidx.compose.material.icons.filled.GetApp
 import androidx.compose.material.icons.filled.Image
 import androidx.compose.material.icons.filled.Memory
+import androidx.compose.material.icons.filled.Movie
+import androidx.compose.material.icons.filled.MusicNote
+import androidx.compose.material.icons.filled.PictureAsPdf
+import androidx.compose.material.icons.filled.Storage
 import androidx.compose.material.icons.filled.OpenInNew
 import androidx.compose.material.icons.filled.Subject
 import androidx.compose.material.icons.filled.Unarchive
@@ -122,6 +126,10 @@ fun OpenAsDialog(spec: DialogSpec.OpenAsChooser, onDismiss: () -> Unit) {
         MenuAction(stringResource(R.string.open_as_image), Icons.Filled.Image) { go(OpenAs.IMAGE) },
         MenuAction(stringResource(R.string.open_as_archive), Icons.Filled.Archive) { go(OpenAs.ARCHIVE) },
         MenuAction(stringResource(R.string.open_as_apk), Icons.Filled.Android) { go(OpenAs.APK) },
+        MenuAction(stringResource(R.string.open_as_audio), Icons.Filled.MusicNote) { go(OpenAs.AUDIO) },
+        MenuAction(stringResource(R.string.open_as_video), Icons.Filled.Movie) { go(OpenAs.VIDEO) },
+        MenuAction(stringResource(R.string.open_as_pdf), Icons.Filled.PictureAsPdf) { go(OpenAs.PDF) },
+        MenuAction(stringResource(R.string.open_as_sqlite), Icons.Filled.Storage) { go(OpenAs.SQLITE) },
         MenuAction(stringResource(R.string.open_as_external), Icons.Filled.OpenInNew) { go(OpenAs.EXTERNAL) }
     )
     MenuDialog(stringResource(R.string.action_open_as), spec.file.name, actions, onDismiss)
@@ -230,6 +238,9 @@ fun RenameDialog(spec: DialogSpec.Rename, onDismiss: () -> Unit) {
 fun DeleteDialog(spec: DialogSpec.Delete, onDismiss: () -> Unit) {
     val context = LocalContext.current
     val entries = spec.entries
+    val inArchive = entries.firstOrNull()?.inArchive == true
+    val trashPossible = !inArchive && entries.all { com.ztmanager.fs.Trash.supports(File(it.path)) }
+    var permanent by remember { mutableStateOf(!Prefs.useTrash || !trashPossible) }
     AlertDialog(
         onDismissRequest = onDismiss,
         title = { Text(stringResource(R.string.action_delete)) },
@@ -243,12 +254,16 @@ fun DeleteDialog(spec: DialogSpec.Delete, onDismiss: () -> Unit) {
                     Spacer(Modifier.height(8.dp))
                     entries.forEach { Text("- " + it.name, style = MaterialTheme.typography.bodySmall) }
                 }
+                if (trashPossible) {
+                    Spacer(Modifier.height(8.dp))
+                    CheckRow(stringResource(R.string.delete_permanently), permanent) { permanent = it }
+                }
             }
         },
         confirmButton = {
             TextButton(onClick = {
                 onDismiss()
-                Actions.delete(context, spec.pane, entries)
+                Actions.delete(context, spec.pane, entries, permanent)
             }) { Text(stringResource(R.string.action_delete), color = MaterialTheme.colorScheme.error) }
         },
         dismissButton = { TextButton(onClick = onDismiss) { Text(stringResource(R.string.cancel)) } }

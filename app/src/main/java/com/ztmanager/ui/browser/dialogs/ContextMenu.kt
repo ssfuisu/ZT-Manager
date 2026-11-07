@@ -1,7 +1,14 @@
 package com.ztmanager.ui.browser.dialogs
 
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.AddToHomeScreen
 import androidx.compose.material.icons.filled.Android
+import androidx.compose.material.icons.filled.CallMerge
+import androidx.compose.material.icons.filled.CallSplit
+import androidx.compose.material.icons.filled.EnhancedEncryption
+import androidx.compose.material.icons.filled.CheckCircle
+import androidx.compose.material.icons.filled.FileCopy
+import androidx.compose.material.icons.filled.LockOpen
 import androidx.compose.material.icons.filled.Archive
 import androidx.compose.material.icons.filled.Bookmark
 import androidx.compose.material.icons.filled.Code
@@ -27,7 +34,9 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.ztmanager.R
 import com.ztmanager.data.Prefs
+import com.ztmanager.fs.FileCrypto
 import com.ztmanager.fs.FileEntry
+import com.ztmanager.fs.SplitTools
 import com.ztmanager.fs.FileType
 import com.ztmanager.fs.Format
 import com.ztmanager.ui.AppState
@@ -40,6 +49,7 @@ import com.ztmanager.ui.browser.Location
 import com.ztmanager.ui.browser.Opener
 import com.ztmanager.ui.common.FileIcon
 import com.ztmanager.ui.common.Intents
+import com.ztmanager.ui.common.Shortcuts
 import java.io.File
 
 @Composable
@@ -136,6 +146,12 @@ fun ContextMenuDialog(spec: DialogSpec.ContextMenu, onDismiss: () -> Unit) {
                     Actions.extract(context, f, null, "", dest)
                 })
             }
+            actions += MenuAction(stringResource(R.string.action_test_archive), Icons.Filled.CheckCircle) {
+                Actions.testArchive(context, f)
+            }
+        }
+        if (!single.isDirectory && SplitTools.isFirstPart(f)) {
+            actions += MenuAction(stringResource(R.string.action_merge), Icons.Filled.CallMerge) { Actions.merge(context, f) }
         }
         if (single.type == FileType.APK) {
             actions += MenuAction(stringResource(R.string.action_install), Icons.Filled.GetApp) { Intents.install(context, f) }
@@ -198,6 +214,20 @@ fun ContextMenuDialog(spec: DialogSpec.ContextMenu, onDismiss: () -> Unit) {
     }
     if (entries.none { it.isDirectory }) {
         actions += MenuAction(stringResource(R.string.action_share), Icons.Filled.Share) { Intents.share(context, files) }
+        if (entries.all { it.extension == FileCrypto.EXTENSION }) {
+            actions += MenuAction(stringResource(R.string.action_decrypt), Icons.Filled.LockOpen) {
+                Dialogs.show(DialogSpec.Crypto(pane, files, decrypt = true))
+            }
+        } else {
+            actions += MenuAction(stringResource(R.string.action_encrypt), Icons.Filled.EnhancedEncryption) {
+                Dialogs.show(DialogSpec.Crypto(pane, files, decrypt = false))
+            }
+        }
+        if (single != null) {
+            actions += MenuAction(stringResource(R.string.action_split), Icons.Filled.CallSplit) {
+                Dialogs.show(DialogSpec.Split(File(single.path)))
+            }
+        }
     }
     if (entries.size == 2 && entries.none { it.isDirectory }) {
         actions += MenuAction(stringResource(R.string.action_compare), Icons.Filled.Compare) {
@@ -213,6 +243,12 @@ fun ContextMenuDialog(spec: DialogSpec.ContextMenu, onDismiss: () -> Unit) {
             }
             actions += MenuAction(stringResource(R.string.tool_analyzer), Icons.Filled.PieChart) {
                 AppState.push(Screen.Analyzer(single.path))
+            }
+            actions += MenuAction(stringResource(R.string.tool_duplicates), Icons.Filled.FileCopy) {
+                AppState.push(Screen.Duplicates(single.path))
+            }
+            actions += MenuAction(stringResource(R.string.action_home_shortcut), Icons.Filled.AddToHomeScreen) {
+                Shortcuts.pinFolder(context, single.path)
             }
         } else {
             actions += MenuAction(stringResource(R.string.action_checksum), Icons.Filled.Fingerprint) {

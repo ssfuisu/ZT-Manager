@@ -142,6 +142,50 @@ class SevenZipHandle(
         }
     }
 
+    override suspend fun test(ctx: ExtractContext): List<String> {
+        val files = items.filter { !it.isDir }
+        ctx.setTotal(files.sumOf { it.size.coerceAtLeast(0) })
+        if (password == null && files.any { it.encrypted }) {
+            password = ctx.askPassword(file.name, false) ?: throw CancellationException()
+        }
+        val byIndex = items.associateBy { it.index }
+        val cb = TestCallback(ctx, password)
+        try {
+            archive.extract(files.map { it.index }.sorted().toIntArray(), true, cb)
+        } catch (e: SevenZipException) {
+            if (ctx.cancelled) throw CancelledByUserException()
+            throw IOException(e.message ?: "Test failed", e)
+        }
+        if (ctx.cancelled) throw CancelledByUserException()
+        return cb.failed.mapNotNull { byIndex[it]?.path }
+    }
+
+    private class TestCallback(val ctx: ExtractContext, val password: String?) : IArchiveExtractCallback, ICryptoGetTextPassword {
+        var currentIndex = -1
+        val failed = ArrayList<Int>()
+
+        override fun getStream(index: Int, extractAskMode: ExtractAskMode?): ISequentialOutStream? {
+            currentIndex = index
+            if (extractAskMode == ExtractAskMode.SKIP) return null
+            return ISequentialOutStream { data ->
+                if (ctx.cancelled) throw SevenZipException("Cancelled")
+                ctx.addBytes(data.size.toLong())
+                data.size
+            }
+        }
+
+        override fun prepareOperation(extractAskMode: ExtractAskMode?) {}
+
+        override fun setOperationResult(extractOperationResult: ExtractOperationResult?) {
+            if (currentIndex >= 0 && extractOperationResult != ExtractOperationResult.OK) failed.add(currentIndex)
+            currentIndex = -1
+        }
+
+        override fun setTotal(total: Long) {}
+        override fun setCompleted(complete: Long) {}
+        override fun cryptoGetTextPassword(): String = password ?: ""
+    }
+
     private class ExtractCallback(
         val targets: Map<Int, File>,
         val ctx: ExtractContext,

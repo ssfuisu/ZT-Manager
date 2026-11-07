@@ -19,6 +19,10 @@ interface with a large set of power-user tools.
 - Properties with folder size calculation, permissions editor (chmod)
 - Background tasks with progress dialog, notification and cancel support
 - Optional root mode (uses `su` for locations the app cannot access)
+- Recycle bin with restore, permanent delete and empty
+- Categories: images, videos, music, documents, archives, APKs, recent and large files
+- Recent locations, range selection, home screen shortcuts for folders
+- Accent colors and light, dark and black themes
 
 ### Archives
 - Browse archives like folders: ZIP, 7z, RAR, RAR5, TAR, GZ, BZ2, XZ, TGZ, ISO, CAB,
@@ -30,12 +34,17 @@ interface with a large set of power-user tools.
 - Compression level from store to ultra
 - Add files to and delete files from ZIP archives
 - Configurable ZIP file name encoding
+- Archive integrity test
 
 ### Tools
 - Text editor: line numbers, syntax highlighting, undo and redo, find and replace
-  (case sensitive and regex), go to line, word wrap, encoding selection, read only mode
+  (case sensitive and regex), go to line, word wrap, auto indent, encoding selection,
+  save with another encoding, LF and CRLF line endings, read only mode
 - Hex editor: paged viewer for large files, byte editing, go to offset, text and hex search
-- Image viewer with swipe, pinch zoom, double tap zoom and rotation
+- Image viewer with swipe, pinch zoom, double tap zoom, rotation, EXIF info and "Set as"
+- Music player with folder playlist, album art, shuffle and repeat
+- Video player and PDF viewer
+- SQLite database editor: browse tables page by page and run SQL statements
 - APK tools: package details, SDK levels, ABIs, signatures (MD5, SHA-1, SHA-256),
   permissions and components, decoded `AndroidManifest.xml`, install
 - App manager: list user and system apps, launch, backup APK (split APKs as `.apks`),
@@ -43,6 +52,9 @@ interface with a large set of power-user tools.
 - Checksums: MD5, SHA-1, SHA-256, SHA-512 and CRC32 with compare
 - File search by name (wildcards) and content
 - Storage analyzer showing the largest folders and files
+- Duplicate file finder (size, partial hash and full hash comparison)
+- File encryption with a password (AES-256-CTR with HMAC-SHA256, PBKDF2 key derivation)
+- Split files into parts and merge them again
 - Text compare (line diff) for two files
 - Terminal with `sh` or `su`
 

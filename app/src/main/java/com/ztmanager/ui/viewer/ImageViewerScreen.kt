@@ -19,6 +19,9 @@ import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.OpenInNew
 import androidx.compose.material.icons.filled.RotateRight
 import androidx.compose.material.icons.filled.Share
+import androidx.compose.material.icons.filled.Wallpaper
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
@@ -102,6 +105,7 @@ fun ImageViewerScreen(path: String) {
                 actions = {
                     IconButton(onClick = { rotation = (rotation + 90f) % 360f }) { Icon(Icons.Filled.RotateRight, null) }
                     IconButton(onClick = { Intents.share(context, listOf(current)) }) { Icon(Icons.Filled.Share, null) }
+                    IconButton(onClick = { Intents.setAs(context, current) }) { Icon(Icons.Filled.Wallpaper, null) }
                     IconButton(onClick = { Intents.openExternal(context, current) }) { Icon(Icons.Filled.OpenInNew, null) }
                     IconButton(onClick = { info = current }) { Icon(Icons.Filled.Info, null) }
                 }
@@ -115,20 +119,43 @@ fun ImageViewerScreen(path: String) {
             android.graphics.BitmapFactory.decodeFile(f.absolutePath, o)
             "${o.outWidth} x ${o.outHeight}"
         }
+        val exif = remember(f) { readExif(f) }
         AlertDialog(
             onDismissRequest = { info = null },
             title = { Text(f.name) },
             text = {
-                Column {
+                Column(Modifier.verticalScroll(rememberScrollState())) {
                     InfoRow(stringResource(R.string.path), f.absolutePath)
                     InfoRow(stringResource(R.string.resolution), dims)
                     InfoRow(stringResource(R.string.size), Format.size(f.length()))
                     InfoRow(stringResource(R.string.modified), Format.dateLong(f.lastModified()))
+                    exif.forEach { (k, v) -> InfoRow(k, v) }
                 }
             },
             confirmButton = { TextButton(onClick = { info = null }) { Text(stringResource(R.string.close)) } }
         )
     }
+}
+
+private fun readExif(f: File): List<Pair<String, String>> = try {
+    val e = android.media.ExifInterface(f.absolutePath)
+    val tags = listOf(
+        "Camera" to android.media.ExifInterface.TAG_MODEL,
+        "Make" to android.media.ExifInterface.TAG_MAKE,
+        "Date" to android.media.ExifInterface.TAG_DATETIME_ORIGINAL,
+        "Exposure" to android.media.ExifInterface.TAG_EXPOSURE_TIME,
+        "F-number" to android.media.ExifInterface.TAG_F_NUMBER,
+        "ISO" to android.media.ExifInterface.TAG_ISO_SPEED_RATINGS,
+        "Focal length" to android.media.ExifInterface.TAG_FOCAL_LENGTH,
+        "Flash" to android.media.ExifInterface.TAG_FLASH,
+        "Software" to android.media.ExifInterface.TAG_SOFTWARE
+    )
+    val out = tags.mapNotNull { (label, tag) -> e.getAttribute(tag)?.takeIf { it.isNotBlank() }?.let { label to it } }.toMutableList()
+    val ll = FloatArray(2)
+    if (e.getLatLong(ll)) out.add("GPS" to String.format("%.6f, %.6f", ll[0], ll[1]))
+    out
+} catch (e: Exception) {
+    emptyList()
 }
 
 @Composable

@@ -148,6 +148,7 @@ fun TextEditorScreen(path: String, readOnlyInitial: Boolean) {
     var menu by remember { mutableStateOf(false) }
     var confirmExit by remember { mutableStateOf(false) }
     var showEncoding by remember { mutableStateOf(false) }
+    var showConvert by remember { mutableStateOf(false) }
 
     val dark = ZtTheme.colors.isDark
     val colors = ZtTheme.colors
@@ -323,6 +324,17 @@ fun TextEditorScreen(path: String, readOnlyInitial: Boolean) {
                         })
                         if (file != null) {
                             DropdownMenuItem(text = { Text(stringResource(R.string.encoding)) }, onClick = { menu = false; showEncoding = true })
+                            DropdownMenuItem(text = { Text(stringResource(R.string.convert_encoding)) }, onClick = { menu = false; showConvert = true })
+                            DropdownMenuItem(
+                                text = { Text(stringResource(R.string.line_ending_crlf)) },
+                                trailingIcon = { Checkbox(loaded?.crlf == true, null) },
+                                onClick = {
+                                    loaded?.let { l ->
+                                        loaded = LoadedText(l.text, l.charset, !l.crlf, l.bom)
+                                        modified = true
+                                    }
+                                }
+                            )
                             DropdownMenuItem(text = { Text(stringResource(R.string.open_as_hex)) }, onClick = {
                                 menu = false
                                 file?.let { AppState.replaceTop(Screen.Hex(it.absolutePath)) }
@@ -363,6 +375,7 @@ fun TextEditorScreen(path: String, readOnlyInitial: Boolean) {
                                 ed.setFontSizeSp(Prefs.editorFontSize.toFloat())
                                 ed.setWordWrap(Prefs.editorWordWrap)
                                 ed.showLineNumbers = Prefs.editorLineNumbers
+                                ed.autoIndent = Prefs.editorAutoIndent
                                 if (ed.readOnly != readOnly) ed.readOnly = readOnly
                             },
                             modifier = Modifier.fillMaxSize()
@@ -392,6 +405,28 @@ fun TextEditorScreen(path: String, readOnlyInitial: Boolean) {
                     TextButton(onClick = { confirmExit = false }) { Text(stringResource(R.string.cancel)) }
                 }
             }
+        )
+    }
+
+    if (showConvert) {
+        AlertDialog(
+            onDismissRequest = { showConvert = false },
+            title = { Text(stringResource(R.string.convert_encoding)) },
+            text = {
+                Column(Modifier.verticalScroll(rememberScrollState())) {
+                    Text(stringResource(R.string.convert_encoding_help), style = MaterialTheme.typography.bodySmall, color = colors.secondaryText)
+                    CHARSETS.forEach { cs ->
+                        RadioRow(cs, loaded?.charset == cs) {
+                            showConvert = false
+                            loaded?.let { l ->
+                                loaded = LoadedText(l.text, cs, l.crlf, l.bom && cs.startsWith("UTF"))
+                                modified = true
+                            }
+                        }
+                    }
+                }
+            },
+            confirmButton = { TextButton(onClick = { showConvert = false }) { Text(stringResource(R.string.close)) } }
         )
     }
 
