@@ -93,12 +93,30 @@ jobs:
           path: dist/*
           if-no-files-found: error
 
+      - name: Decide release
+        id: release
+        env:
+          COMMIT_MESSAGE: ${{ github.event.head_commit.message }}
+        run: |
+          VERSION="${{ steps.collect.outputs.version }}"
+          if [[ "$GITHUB_REF" == refs/tags/v* ]]; then
+            echo "publish=true" >> "$GITHUB_OUTPUT"
+            echo "tag=${GITHUB_REF_NAME}" >> "$GITHUB_OUTPUT"
+          elif [[ "$GITHUB_EVENT_NAME" == "workflow_dispatch" ]] || [[ "$GITHUB_EVENT_NAME" == "push" && "$COMMIT_MESSAGE" == *"[release]"* ]]; then
+            echo "publish=true" >> "$GITHUB_OUTPUT"
+            echo "tag=v${VERSION}" >> "$GITHUB_OUTPUT"
+          else
+            echo "publish=false" >> "$GITHUB_OUTPUT"
+          fi
+
       - name: Publish GitHub release
-        if: startsWith(github.ref, 'refs/tags/v')
+        if: steps.release.outputs.publish == 'true'
         uses: softprops/action-gh-release@v2
         with:
-          name: ZT Manager ${{ github.ref_name }}
-          tag_name: ${{ github.ref_name }}
+          name: ZT Manager ${{ steps.release.outputs.tag }}
+          tag_name: ${{ steps.release.outputs.tag }}
+          target_commitish: ${{ github.sha }}
+          make_latest: true
           generate_release_notes: true
           body: |
             Signed release builds of ZT Manager.
@@ -106,7 +124,7 @@ jobs:
             - `arm64-v8a`: for 64-bit ARM devices (most modern phones)
             - `armeabi-v7a`: for 32-bit ARM devices
 
-            Checksums are listed in `SHA256SUMS.txt`.
+            Requires Android 8.0 or newer. Checksums are listed in `SHA256SUMS.txt`.
           files: |
             dist/*.apk
             dist/SHA256SUMS.txt

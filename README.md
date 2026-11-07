@@ -70,13 +70,14 @@ The APKs are written to `app/build/outputs/apk/release/`.
 ## Continuous integration and releases
 
 The workflow in `.github/workflows/build.yml` builds signed 64-bit and 32-bit release APKs
-on every push and uploads them as workflow artifacts. Pushing a tag that starts with `v`
-(for example `v1.0.1`) also publishes a GitHub release with both APKs.
+on every push and uploads them as workflow artifacts. A GitHub release with both APKs is
+published when:
 
-```
-git tag v1.0.1
-git push origin v1.0.1
-```
+- a tag starting with `v` is pushed (for example `v1.0.1`),
+- a pushed commit message contains `[release]` (the tag `v<versionName>` is created), or
+- the workflow is started manually from the Actions tab.
+
+Bump `appVersionCode` and `appVersionName` in `app/build.gradle.kts` before each release.
 
 ### Signing
 
