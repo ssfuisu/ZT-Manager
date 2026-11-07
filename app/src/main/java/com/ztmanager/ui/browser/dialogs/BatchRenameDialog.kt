@@ -52,15 +52,6 @@ fun BatchRenameDialog(spec: DialogSpec.BatchRename, onDismiss: () -> Unit) {
     var error by remember { mutableStateOf<String?>(null) }
     val failedFmt = stringResource(R.string.msg_rename_failed)
 
-    fun newName(e: FileEntry, i: Int): String {
-        val raw = rawName(e, i)
-        return when (case) {
-            1 -> raw.lowercase()
-            2 -> raw.uppercase()
-            else -> raw
-        }
-    }
-
     fun rawName(e: FileEntry, i: Int): String {
         val (base, ext) = splitName(e)
         return if (patternMode) {
@@ -77,6 +68,15 @@ fun BatchRenameDialog(spec: DialogSpec.BatchRename, onDismiss: () -> Unit) {
             if (find.isEmpty()) e.name
             else if (regex) runCatching { e.name.replace(Regex(find), replace) }.getOrDefault(e.name)
             else e.name.replace(find, replace)
+        }
+    }
+
+    fun newName(e: FileEntry, i: Int): String {
+        val raw = rawName(e, i)
+        return when (case) {
+            1 -> raw.lowercase()
+            2 -> raw.uppercase()
+            else -> raw
         }
     }
 
