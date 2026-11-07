@@ -1,0 +1,53 @@
+name: Bug report
+description: Something does not work as expected
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: Thanks for taking the time to report a problem. Please fill in as much as you can.
+  - type: input
+    id: version
+    attributes:
+      label: App version
+      description: Settings > About
+      placeholder: "1.2.0"
+    validations:
+      required: true
+  - type: dropdown
+    id: abi
+    attributes:
+      label: APK variant
+      options:
+        - arm64-v8a (64-bit)
+        - armeabi-v7a (32-bit)
+        - Built from source
+    validations:
+      required: true
+  - type: input
+    id: device
+    attributes:
+      label: Device and Android version
+      placeholder: "Pixel 8, Android 15"
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+      placeholder: |
+        1. Open ...
+        2. Long press ...
+        3. Choose ...
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected and actual behavior
+    validations:
+      required: true
+  - type: textarea
+    id: extra
+    attributes:
+      label: Additional information
+      description: Screenshots, archive format, error messages, root or not.
