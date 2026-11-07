@@ -29,7 +29,7 @@ files over Wi-Fi and much more, all in one lightweight app without ads or tracki
 - Dual pane browser with a breadcrumb path bar, list and grid views
 - Native 7-Zip engine: open ZIP, 7z, RAR, RAR5, TAR, ISO and many more
 - Built-in text editor, hex editor, image, music, video, PDF and font viewers
-- APK tools, app manager and split APK installer
+- APK tools with on-device APK signing, app manager and split APK installer
 - Wi-Fi file sharing through any web browser
 - Recycle bin, file encryption, duplicate finder, storage analyzer and terminal
 - Light, dark and black themes with seven accent colors
@@ -63,16 +63,16 @@ compatible, use `armeabi-v7a`. Every release also contains a `SHA256SUMS.txt` fi
 | Selection | Tap a file icon to select, select all, invert, select a range. Long press opens the context menu for the item or the whole selection. |
 | Operations | Copy, cut, paste, copy or move to any folder, rename, batch rename (pattern with counters or find and replace with regular expressions), new file and folder, delete. |
 | Safety | Recycle bin with restore, confirmation before deleting, conflict handling with overwrite, skip, keep both and apply to all. |
-| Display | Natural sorting by name, size, date or type, folders first, hidden files, thumbnails for images, videos and APK icons, item counts for folders, quick filter. |
-| Details | Properties with folder size calculation, permission editor (chmod, optional recursive), checksums. |
+| Display | Natural sorting by name, size, date or type, folders first, hidden files, thumbnails for images, videos, PDFs, album art and APK icons, item counts and optional sizes for folders, quick filter. |
+| Details | Properties with folder size calculation and media details, permission editor (chmod, optional recursive), checksums, copy path, set date to now, symbolic links, hide from gallery (`.nomedia`). |
 | Background work | Every long operation runs as a task with a progress dialog, a notification and a cancel button, and can continue in the background. |
 | Root | Optional root mode uses `su` for locations the app cannot access. |
 
 ### Archives
 
 Archives open like folders. You can extract everything or just the selected entries,
-copy entries out with the clipboard, test the archive for errors and add or delete
-files in ZIP archives.
+copy entries out with the clipboard, test the archive for errors and add, rename or delete
+files in ZIP archives. Passwords can be remembered and are tried automatically.
 
 | Format | Open and extract | Create |
 | --- | :---: | :---: |
@@ -94,8 +94,8 @@ configurable ZIP file name encoding for archives made on other systems.
   read only mode. Files up to 16 MB.
 - **Hex editor**: pages through files of any size, edit single bytes, go to offset,
   search for text or hex bytes, byte inspector (hex, decimal, octal, binary).
-- **Image viewer**: swipe through the folder, pinch and double tap zoom, rotation,
-  EXIF details including GPS, share and "Set as".
+- **Image viewer**: swipe through the folder, slideshow, pinch and double tap zoom,
+  rotation, EXIF details including GPS, share, delete and "Set as".
 - **Music player**: whole folder as playlist, album art and tags, shuffle and repeat.
 - **Video player** and **PDF viewer** with page jump and zoom.
 - **SQLite editor**: browse tables page by page, inspect rows and run any SQL statement.
@@ -109,20 +109,24 @@ configurable ZIP file name encoding for archives made on other systems.
 - **App manager**: user and system apps, sort by name, size, install or update date,
   launch, backup APK (split apps are saved as `.apks`), share, app settings, uninstall.
 - **Split APK installer** for `.apks`, `.xapk` and `.apkm` bundles.
+- **APK signer**: sign APKs with v1, v2 and v3 signatures using a key that is generated on
+  the device and stored in the Android Keystore, and verify existing signatures.
 
 ### Network sharing
 
 **Wi-Fi share** starts a small web server inside the app. Any device on the same network
 can open the shown address in a browser to browse folders, download files (with resume
 and video seeking), download whole folders as ZIP and upload files to the phone. An
-optional password protects the share.
+optional password protects the share, and a QR code makes connecting from another
+phone instant.
 
 ### Tools
 
 | Tool | Description |
 | --- | --- |
 | Categories | Images, videos, music, documents, archives, APKs, recent and large files from the media index. |
-| Search | Recursive name search with wildcards and optional content search. |
+| Search | Recursive name search with wildcards, content search, size and date filters, and find and replace across all results. |
+| Folder compare | Compares two folders, optionally with subfolders, and copies missing or changed files in either direction. |
 | Storage analyzer | Shows which folders and files use the most space. |
 | Duplicate finder | Compares size, partial hash and full hash, then selects all copies but one. |
 | Encryption | Password based file encryption (AES-256-CTR, HMAC-SHA256, PBKDF2). |
@@ -239,6 +243,8 @@ ZT Manager is built on these open source projects:
 | --- | --- |
 | 7-Zip-JBinding-4Android and 7-Zip by Igor Pavlov | LGPL 2.1 with the unRAR restriction |
 | zip4j | Apache 2.0 |
+| apksig (Android Open Source Project) | Apache 2.0 |
+| ZXing core | Apache 2.0 |
 | Apache Commons Compress, Commons IO, Commons Lang | Apache 2.0 |
 | XZ for Java | Public domain (0BSD) |
 | AndroidX and Jetpack Compose | Apache 2.0 |

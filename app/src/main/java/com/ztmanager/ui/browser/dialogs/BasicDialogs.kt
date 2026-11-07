@@ -216,7 +216,13 @@ fun RenameDialog(spec: DialogSpec.Rename, onDismiss: () -> Unit) {
             return
         }
         try {
-            FileOps.rename(File(entry.path), n)
+            if (entry.inArchive) {
+                val session = spec.pane.archive ?: return
+                session.handle.rename(entry.path, n)
+                session.reload()
+            } else {
+                FileOps.rename(File(entry.path), n)
+            }
             onDismiss()
             AppState.refreshAll()
         } catch (e: Exception) {

@@ -41,6 +41,8 @@ object Prefs {
     var builtInViewers by BoolPref("builtin_viewers", true)
     var accent by IntPref("accent", 0)
     var pinHash by StringPref("pin_hash", "")
+    var savedPasswordsRaw by StringPref("saved_passwords", "")
+    var showFolderSizes by BoolPref("show_folder_sizes", false)
     var pinSalt by StringPref("pin_salt", "")
 
     // Editor
@@ -66,6 +68,14 @@ object Prefs {
 
     fun addRecent(path: String) {
         recentRaw = (listOf(path) + recentDirs.filter { it != path }).take(10).joinToString("\n")
+    }
+
+    val savedPasswords: List<String>
+        get() = savedPasswordsRaw.split('\n').filter { it.isNotEmpty() }
+
+    fun savePassword(pw: String) {
+        if (pw.isEmpty() || pw.contains('\n')) return
+        savedPasswordsRaw = (listOf(pw) + savedPasswords.filter { it != pw }).take(30).joinToString("\n")
     }
 
     fun clearRecent() {

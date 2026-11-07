@@ -60,6 +60,8 @@ object Thumbnails {
                     ThumbnailUtils.createVideoThumbnail(File(entry.path), Size(px, px), null)
                 else null
                 FileType.APK -> apkIcon(context, entry.path)?.toBitmap(px, px)
+                FileType.PDF -> pdfFirstPage(entry.path, px)
+                FileType.AUDIO -> audioArt(entry.path, px)
                 else -> null
             }
         } catch (e: Throwable) {
@@ -76,6 +78,42 @@ object Thumbnails {
         var sample = 1
         while (opts.outWidth / (sample * 2) >= req && opts.outHeight / (sample * 2) >= req) sample *= 2
         return BitmapFactory.decodeFile(path, BitmapFactory.Options().apply { inSampleSize = sample })
+    }
+
+    fun pdfFirstPage(path: String, px: Int): Bitmap? {
+        android.os.ParcelFileDescriptor.open(File(path), android.os.ParcelFileDescriptor.MODE_READ_ONLY).use { fd ->
+            android.graphics.pdf.PdfRenderer(fd).use { r ->
+                if (r.pageCount == 0) return null
+                r.openPage(0).use { page ->
+                    val w = px
+                    val h = (px.toFloat() * page.height / page.width.coerceAtLeast(1)).toInt().coerceIn(1, px * 2)
+                    val bmp = Bitmap.createBitmap(w, h, Bitmap.Config.ARGB_8888)
+                    bmp.eraseColor(android.graphics.Color.WHITE)
+                    page.render(bmp, null, null, android.graphics.pdf.PdfRenderer.Page.RENDER_MODE_FOR_DISPLAY)
+                    return bmp
+                }
+            }
+        }
+    }
+
+    fun audioArt(path: String, px: Int): Bitmap? {
+        val r = android.media.MediaMetadataRetriever()
+        return try {
+            r.setDataSource(path)
+            val data = r.embeddedPicture ?: return null
+            val opts = BitmapFactory.Options().apply { inJustDecodeBounds = true }
+            BitmapFactory.decodeByteArray(data, 0, data.size, opts)
+            var sample = 1
+            while (opts.outWidth / (sample * 2) >= px) sample *= 2
+            BitmapFactory.decodeByteArray(data, 0, data.size, BitmapFactory.Options().apply { inSampleSize = sample })
+        } catch (e: Exception) {
+            null
+        } finally {
+            try {
+                r.release()
+            } catch (_: Exception) {
+            }
+        }
     }
 
     fun apkIcon(context: android.content.Context, path: String): Drawable? {
@@ -96,7 +134,8 @@ fun FileIcon(
 ) {
     val context = LocalContext.current
     val showThumb = Prefs.showThumbnails && !entry.inArchive &&
-        (entry.type == FileType.IMAGE || entry.type == FileType.VIDEO || entry.type == FileType.APK)
+        (entry.type == FileType.IMAGE || entry.type == FileType.VIDEO || entry.type == FileType.APK ||
+            entry.type == FileType.PDF || entry.type == FileType.AUDIO)
     val pxSize = with(androidx.compose.ui.platform.LocalDensity.current) { size.roundToPx() }
     val thumb: ImageBitmap? by produceState<ImageBitmap?>(null, entry.path, entry.lastModified, showThumb) {
         value = if (showThumb) withContext(Dispatchers.IO) {
@@ -109,7 +148,7 @@ fun FileIcon(
             t != null -> Image(
                 bitmap = t,
                 contentDescription = null,
-                contentScale = if (entry.type == FileType.APK) ContentScale.Fit else ContentScale.Crop,
+                contentScale = if (entry.type == FileType.APK || entry.type == FileType.PDF) ContentScale.Fit else ContentScale.Crop,
                 modifier = Modifier
                     .size(size)
                     .clip(RoundedCornerShape(6.dp))

@@ -148,6 +148,23 @@ class ZipHandle(override val file: File, charset: Charset) : ArchiveHandle {
         reload()
     }
 
+    override fun rename(path: String, newName: String) {
+        val parent = path.substringBeforeLast('/', "")
+        val target = if (parent.isEmpty()) newName else "$parent/$newName"
+        val map = LinkedHashMap<String, String>()
+        for (h in headers) {
+            val n = normalizePath(h.fileName)
+            val suffix = if (h.fileName.endsWith("/")) "/" else ""
+            when {
+                n == path -> map[h.fileName] = target + suffix
+                n.startsWith("$path/") -> map[h.fileName] = target + n.substring(path.length) + suffix
+            }
+        }
+        if (map.isEmpty()) throw java.io.IOException("Entry not found")
+        zip.renameFiles(map)
+        reload()
+    }
+
     override fun delete(items: List<ArchiveItem>) {
         val names = items.map { headers[it.index].fileName }
         if (names.isNotEmpty()) zip.removeFiles(names)

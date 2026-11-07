@@ -38,6 +38,11 @@ interface ArchiveHandle : Closeable {
         throw UnsupportedOperationException("Read-only archive")
     }
 
+    /** Renames the entry at [path] (file or folder) to [newName] inside the same folder. */
+    fun rename(path: String, newName: String) {
+        throw UnsupportedOperationException("Read-only archive")
+    }
+
     fun delete(items: List<ArchiveItem>) {
         throw UnsupportedOperationException("Read-only archive")
     }

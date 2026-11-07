@@ -20,7 +20,7 @@ sealed interface Screen {
     data class Images(val path: String) : Screen
     data class ApkInfo(val path: String) : Screen
     data object Apps : Screen
-    data object Terminal : Screen
+    data class Terminal(val dir: String = "") : Screen
     data class Search(val dir: String) : Screen
     data class Analyzer(val dir: String) : Screen
     data class Diff(val a: String, val b: String) : Screen
@@ -36,6 +36,7 @@ sealed interface Screen {
     data object TextTools : Screen
     data object DeviceInfo : Screen
     data class Font(val path: String) : Screen
+    data class FolderCompare(val left: String, val right: String) : Screen
     data object Settings : Screen
     data object About : Screen
 }

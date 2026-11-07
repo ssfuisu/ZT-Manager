@@ -9,7 +9,9 @@ import com.ztmanager.archive.CreateFormat
 import com.ztmanager.archive.ExtractContext
 import com.ztmanager.fs.FileEntry
 import com.ztmanager.data.Prefs
+import com.ztmanager.apk.ApkSigning
 import com.ztmanager.apk.SplitInstaller
+import com.ztmanager.fs.RootShell
 import com.ztmanager.fs.ChecksumFiles
 import com.ztmanager.fs.FileCrypto
 import com.ztmanager.fs.ImageTools
@@ -308,5 +310,55 @@ object Actions {
                 if (deleteSource) FileOps.deleteRecursive(f)
             }
         }
+    }
+
+    fun signApk(context: Context, apk: File) {
+        TaskManager.start(
+            title = context.getString(R.string.task_sign),
+            successMessage = context.getString(R.string.msg_signed),
+            onDone = { AppState.refreshAll() }
+        ) { ApkSigning.sign(this, apk) }
+    }
+
+    fun verifyApk(context: Context, apk: File) {
+        var report = ""
+        val title = context.getString(R.string.action_verify_signature)
+        TaskManager.start(
+            title = context.getString(R.string.task_verify),
+            onDone = { err -> if (err == null) Dialogs.show(DialogSpec.Message(title, report)) }
+        ) {
+            setMessage(apk.name)
+            report = ApkSigning.verifyReport(apk)
+        }
+    }
+
+    fun touch(context: Context, files: List<File>) {
+        val now = System.currentTimeMillis()
+        val failed = files.count { !it.setLastModified(now) }
+        if (failed > 0) AppState.toast(context.getString(R.string.msg_failed))
+        AppState.refreshAll()
+    }
+
+    fun toggleNoMedia(context: Context, dir: File) {
+        val f = File(dir, ".nomedia")
+        val ok = if (f.exists()) f.delete() else try {
+            f.createNewFile()
+        } catch (e: Exception) {
+            false
+        }
+        AppState.toast(context.getString(if (ok) R.string.msg_done else R.string.msg_failed))
+        AppState.refreshAll()
+    }
+
+    fun createLink(context: Context, target: File, linkName: String) {
+        val link = File(target.parentFile, linkName)
+        val ok = try {
+            android.system.Os.symlink(target.absolutePath, link.absolutePath)
+            true
+        } catch (e: Exception) {
+            Prefs.rootMode && RootShell.exec("ln -s " + RootShell.quote(target.absolutePath) + " " + RootShell.quote(link.absolutePath)).ok
+        }
+        AppState.toast(context.getString(if (ok) R.string.msg_done else R.string.msg_failed))
+        AppState.refreshAll()
     }
 }

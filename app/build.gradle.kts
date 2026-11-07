@@ -7,8 +7,8 @@ plugins {
     id("org.jetbrains.kotlin.plugin.compose")
 }
 
-val appVersionCode = 3
-val appVersionName = "1.2.0"
+val appVersionCode = 4
+val appVersionName = "1.3.0"
 
 fun envOrNull(name: String): String? = System.getenv(name)?.takeIf { it.isNotBlank() }
 
@@ -104,7 +104,8 @@ kotlin {
         jvmTarget.set(JvmTarget.JVM_17)
         freeCompilerArgs.addAll(
             "-opt-in=androidx.compose.material3.ExperimentalMaterial3Api",
-            "-opt-in=androidx.compose.foundation.ExperimentalFoundationApi"
+            "-opt-in=androidx.compose.foundation.ExperimentalFoundationApi",
+            "-opt-in=androidx.compose.foundation.layout.ExperimentalLayoutApi"
         )
     }
 }
@@ -145,4 +146,9 @@ dependencies {
     implementation("org.apache.commons:commons-compress:1.27.1")
     implementation("org.tukaani:xz:1.10")
     implementation("com.github.omicronapps:7-Zip-JBinding-4Android:Release-16.02-2.03")
+
+    // APK signing and verification
+    implementation("com.android.tools.build:apksig:8.10.1")
+    // QR codes for Wi-Fi share
+    implementation("com.google.zxing:core:3.5.3")
 }

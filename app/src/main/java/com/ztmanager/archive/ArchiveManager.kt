@@ -39,6 +39,19 @@ object ArchiveManager {
     suspend fun openInteractive(file: File): ArchiveHandle {
         var pw: String? = PasswordCache.get(file.absolutePath)
         var wrong = false
+        if (pw == null) {
+            try {
+                return open(file, null)
+            } catch (e: PasswordRequiredException) {
+                // try the passwords the user saved before asking
+                for (saved in Prefs.savedPasswords) {
+                    try {
+                        return open(file, saved)
+                    } catch (_: PasswordRequiredException) {
+                    }
+                }
+            }
+        }
         while (true) {
             try {
                 return open(file, pw)

@@ -44,6 +44,7 @@ import com.ztmanager.ui.viewer.PdfViewerScreen
 import com.ztmanager.ui.viewer.VideoPlayerScreen
 import com.ztmanager.ui.tools.CategoryScreen
 import com.ztmanager.ui.tools.DeviceInfoScreen
+import com.ztmanager.ui.tools.FolderCompareScreen
 import com.ztmanager.ui.tools.ShareScreen
 import com.ztmanager.ui.tools.TextToolsScreen
 import com.ztmanager.ui.viewer.FontViewerScreen
@@ -77,7 +78,8 @@ fun AppRoot(onRequestPermission: () -> Unit) {
             is Screen.Images -> ImageViewerScreen(screen.path)
             is Screen.ApkInfo -> ApkInfoScreen(screen.path)
             Screen.Apps -> AppManagerScreen()
-            Screen.Terminal -> TerminalScreen()
+            is Screen.Terminal -> TerminalScreen(screen.dir)
+            is Screen.FolderCompare -> FolderCompareScreen(screen.left, screen.right)
             is Screen.Search -> SearchScreen(screen.dir)
             is Screen.Analyzer -> AnalyzerScreen(screen.dir)
             is Screen.Diff -> DiffScreen(screen.a, screen.b)

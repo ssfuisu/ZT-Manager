@@ -8,6 +8,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.FileCopy
 import androidx.compose.material.icons.filled.History
+import androidx.compose.material.icons.filled.CompareArrows
 import androidx.compose.material.icons.filled.TextFields
 import androidx.compose.material.icons.filled.Wifi
 import com.ztmanager.share.ShareServer
@@ -186,6 +187,12 @@ fun AppDrawer(onClose: () -> Unit) {
             DrawerItem(Icons.Filled.Apps, stringResource(R.string.tool_apps)) { onClose(); AppState.push(Screen.Apps) }
             DrawerItem(Icons.Filled.Search, stringResource(R.string.tool_search)) { onClose(); AppState.push(Screen.Search(dir)) }
             DrawerItem(Icons.Filled.PieChart, stringResource(R.string.tool_analyzer)) { onClose(); AppState.push(Screen.Analyzer(dir)) }
+            DrawerItem(Icons.Filled.CompareArrows, stringResource(R.string.tool_folder_compare)) {
+                onClose()
+                val l = AppState.panes[0].currentDir?.path ?: root
+                val r = AppState.panes[1].currentDir?.path ?: root
+                AppState.push(Screen.FolderCompare(l, r))
+            }
             DrawerItem(Icons.Filled.FileCopy, stringResource(R.string.tool_duplicates)) { onClose(); AppState.push(Screen.Duplicates(dir)) }
             DrawerItem(Icons.Filled.Delete, stringResource(R.string.tool_trash)) { onClose(); AppState.push(Screen.Trash) }
             DrawerItem(
@@ -193,7 +200,7 @@ fun AppDrawer(onClose: () -> Unit) {
                 stringResource(R.string.tool_share),
                 subtitle = if (ShareServer.server != null) stringResource(R.string.share_running) else null
             ) { onClose(); AppState.push(Screen.Share) }
-            DrawerItem(Icons.Filled.Code, stringResource(R.string.tool_terminal)) { onClose(); AppState.push(Screen.Terminal) }
+            DrawerItem(Icons.Filled.Code, stringResource(R.string.tool_terminal)) { onClose(); AppState.push(Screen.Terminal(dir)) }
             DrawerItem(Icons.Filled.TextFields, stringResource(R.string.tool_text_tools)) { onClose(); AppState.push(Screen.TextTools) }
             DrawerItem(Icons.Filled.PhoneAndroid, stringResource(R.string.tool_device_info)) { onClose(); AppState.push(Screen.DeviceInfo) }
             DrawerItem(Icons.Filled.Memory, stringResource(R.string.tool_text_editor)) {

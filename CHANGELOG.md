@@ -6,6 +6,26 @@ project follows [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [1.3.0] - 2026-11-07
+
+### Added
+- APK signer: sign APKs (v1, v2 and v3) with a key generated on the device and kept in
+  the Android Keystore, and verify APK signatures with a detailed report.
+- Folder compare: compare two folders (optionally with subfolders) and copy missing or
+  changed files in either direction.
+- Find and replace in all files found by a content search.
+- QR code for the Wi-Fi share address.
+- Saved archive passwords: remember passwords and try them automatically.
+- Rename files and folders inside ZIP archives.
+- Image viewer slideshow and delete.
+- Context menu: copy path, open terminal here, hide from gallery (.nomedia), set date to
+  now, create symbolic link.
+- Thumbnails for PDF files and album art for music.
+- Media details (duration, resolution, bit rate, tags) in the properties dialog.
+- Optional folder sizes in the file list.
+- Batch rename: `{date}` and `{time}` tokens and case conversion.
+- Search filters for minimum size and modification date.
+
 ## [1.2.0] - 2026-11-07
 
 ### Added
@@ -49,7 +69,8 @@ project follows [Semantic Versioning](https://semver.org/).
 - English and Turkish translations following the system language.
 - Signed 64-bit and 32-bit release builds from GitHub Actions.
 
-[Unreleased]: https://github.com/ssfuisu/ZT-Manager/compare/v1.2.0...HEAD
+[Unreleased]: https://github.com/ssfuisu/ZT-Manager/compare/v1.3.0...HEAD
+[1.3.0]: https://github.com/ssfuisu/ZT-Manager/compare/v1.2.0...v1.3.0
 [1.2.0]: https://github.com/ssfuisu/ZT-Manager/compare/v1.1.0...v1.2.0
 [1.1.0]: https://github.com/ssfuisu/ZT-Manager/compare/v1.0.0...v1.1.0
 [1.0.0]: https://github.com/ssfuisu/ZT-Manager/releases/tag/v1.0.0

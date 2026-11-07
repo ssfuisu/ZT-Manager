@@ -19,6 +19,10 @@ import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.OpenInNew
 import androidx.compose.material.icons.filled.RotateRight
 import androidx.compose.material.icons.filled.Share
+import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.Pause
+import androidx.compose.material.icons.filled.Slideshow
+import kotlinx.coroutines.launch
 import androidx.compose.material.icons.filled.Wallpaper
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
@@ -67,16 +71,30 @@ fun ImageViewerScreen(path: String) {
     val context = LocalContext.current
     val start = remember { File(path) }
     val images = remember {
-        start.parentFile?.listFiles()
+        val list = start.parentFile?.listFiles()
             ?.filter { it.isFile && FileType.of(it.name, false) == FileType.IMAGE }
             ?.sortedWith { a, b -> NaturalOrder.compare(a.name, b.name) }
             ?.takeIf { it.isNotEmpty() } ?: listOf(start)
+        androidx.compose.runtime.mutableStateListOf<File>().apply { addAll(list) }
     }
     val initial = images.indexOfFirst { it.absolutePath == start.absolutePath }.coerceAtLeast(0)
     val pager = rememberPagerState(initialPage = initial) { images.size }
     var showUi by remember { mutableStateOf(true) }
     var info by remember { mutableStateOf<File?>(null) }
     var rotation by remember { mutableFloatStateOf(0f) }
+    var slideshow by remember { mutableStateOf(false) }
+    var confirmDelete by remember { mutableStateOf<File?>(null) }
+    val scope = androidx.compose.runtime.rememberCoroutineScope()
+    androidx.compose.runtime.LaunchedEffect(slideshow) {
+        while (slideshow && images.size > 1) {
+            kotlinx.coroutines.delay(3000)
+            pager.animateScrollToPage((pager.currentPage + 1) % images.size)
+        }
+    }
+    if (images.isEmpty()) {
+        androidx.compose.runtime.LaunchedEffect(Unit) { AppState.pop() }
+        return
+    }
     val current = images[pager.currentPage.coerceIn(0, images.lastIndex)]
 
     Box(
@@ -103,7 +121,11 @@ fun ImageViewerScreen(path: String) {
                     }
                 },
                 actions = {
+                    IconButton(onClick = { slideshow = !slideshow; if (slideshow) showUi = false }) {
+                        Icon(if (slideshow) Icons.Filled.Pause else Icons.Filled.Slideshow, null)
+                    }
                     IconButton(onClick = { rotation = (rotation + 90f) % 360f }) { Icon(Icons.Filled.RotateRight, null) }
+                    IconButton(onClick = { confirmDelete = current }) { Icon(Icons.Filled.Delete, null) }
                     IconButton(onClick = { Intents.share(context, listOf(current)) }) { Icon(Icons.Filled.Share, null) }
                     IconButton(onClick = { Intents.setAs(context, current) }) { Icon(Icons.Filled.Wallpaper, null) }
                     IconButton(onClick = { Intents.openExternal(context, current) }) { Icon(Icons.Filled.OpenInNew, null) }
@@ -111,6 +133,37 @@ fun ImageViewerScreen(path: String) {
                 }
             )
         }
+    }
+
+    confirmDelete?.let { f ->
+        AlertDialog(
+            onDismissRequest = { confirmDelete = null },
+            title = { Text(stringResource(R.string.action_delete)) },
+            text = { Text(stringResource(R.string.confirm_delete_one, f.name)) },
+            confirmButton = {
+                TextButton(onClick = {
+                    confirmDelete = null
+                    scope.launch {
+                        val ok = withContext(Dispatchers.IO) {
+                            try {
+                                if (com.ztmanager.data.Prefs.useTrash && com.ztmanager.fs.Trash.supports(f)) {
+                                    val dummy = com.ztmanager.task.TaskContext(com.ztmanager.task.TaskHandle(-1, ""))
+                                    com.ztmanager.fs.Trash.moveToTrash(dummy, listOf(f))
+                                    true
+                                } else f.delete()
+                            } catch (e: Exception) {
+                                false
+                            }
+                        }
+                        if (ok) {
+                            images.remove(f)
+                            AppState.refreshAll()
+                        } else AppState.toast(context.getString(R.string.msg_failed))
+                    }
+                }) { Text(stringResource(R.string.action_delete), color = MaterialTheme.colorScheme.error) }
+            },
+            dismissButton = { TextButton(onClick = { confirmDelete = null }) { Text(stringResource(R.string.cancel)) } }
+        )
     }
 
     info?.let { f ->

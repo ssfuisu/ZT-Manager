@@ -63,6 +63,7 @@ import androidx.compose.ui.unit.sp
 import com.ztmanager.R
 import com.ztmanager.data.Prefs
 import com.ztmanager.fs.FileEntry
+import com.ztmanager.fs.FileOps
 import com.ztmanager.fs.Format
 import com.ztmanager.fs.StorageUtil
 import com.ztmanager.ui.AppState
@@ -101,6 +102,34 @@ fun PaneView(pane: PaneState, showPaneTabs: Boolean, showActiveMarker: Boolean, 
             }
         }
     }
+}
+
+/** Background folder size calculation with a small cache. */
+object FolderSizes {
+    private val cache = java.util.concurrent.ConcurrentHashMap<String, Pair<Long, Long>>()
+    private val limiter = kotlinx.coroutines.sync.Semaphore(2)
+
+    suspend fun get(path: String): Long {
+        val f = File(path)
+        val stamp = f.lastModified()
+        cache[path]?.let { if (it.first == stamp) return it.second }
+        return limiter.withPermitCompat {
+            kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
+                FileOps.stats(listOf(f)).size.also { cache[path] = stamp to it }
+            }
+        }
+    }
+
+    private suspend fun <T> kotlinx.coroutines.sync.Semaphore.withPermitCompat(block: suspend () -> T): T {
+        acquire()
+        try {
+            return block()
+        } finally {
+            release()
+        }
+    }
+
+    fun clear() = cache.clear()
 }
 
 object FilterState {
@@ -301,8 +330,12 @@ private fun ParentRow(pane: PaneState) {
 @Composable
 private fun FileRow(pane: PaneState, entry: FileEntry, selected: Boolean) {
     val context = LocalContext.current
-    val itemsLabel = if (entry.isDirectory && entry.childCount >= 0)
+    val countLabel = if (entry.isDirectory && entry.childCount >= 0)
         stringResource(R.string.n_items, entry.childCount) else ""
+    val folderSize by androidx.compose.runtime.produceState<Long?>(null, entry.path, Prefs.showFolderSizes) {
+        value = if (entry.isDirectory && !entry.inArchive && Prefs.showFolderSizes) FolderSizes.get(entry.path) else null
+    }
+    val itemsLabel = folderSize?.let { sz -> if (countLabel.isEmpty()) Format.size(sz) else "$countLabel, " + Format.size(sz) } ?: countLabel
     Row(
         verticalAlignment = Alignment.CenterVertically,
         modifier = Modifier

@@ -5,6 +5,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
@@ -48,6 +49,12 @@ import com.ztmanager.ui.theme.ZtTheme
 fun PasswordDialog(p: Prompt.Password) {
     var pw by remember(p) { mutableStateOf("") }
     var show by remember(p) { mutableStateOf(false) }
+    var rememberPw by remember(p) { mutableStateOf(false) }
+    val saved = com.ztmanager.data.Prefs.savedPasswords
+    fun ok() {
+        if (rememberPw) com.ztmanager.data.Prefs.savePassword(pw)
+        p.result.complete(pw)
+    }
     AlertDialog(
         onDismissRequest = { p.result.complete(null) },
         properties = DialogProperties(dismissOnClickOutside = false),
@@ -67,7 +74,7 @@ fun PasswordDialog(p: Prompt.Password) {
                     singleLine = true,
                     visualTransformation = if (show) VisualTransformation.None else PasswordVisualTransformation(),
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password, imeAction = ImeAction.Done),
-                    keyboardActions = KeyboardActions(onDone = { p.result.complete(pw) }),
+                    keyboardActions = KeyboardActions(onDone = { ok() }),
                     trailingIcon = {
                         IconButton(onClick = { show = !show }) {
                             Icon(if (show) Icons.Filled.VisibilityOff else Icons.Filled.Visibility, null)
@@ -75,9 +82,22 @@ fun PasswordDialog(p: Prompt.Password) {
                     },
                     modifier = Modifier.fillMaxWidth()
                 )
+                CheckRow(stringResource(R.string.remember_password), rememberPw) { rememberPw = it }
+                if (saved.isNotEmpty()) {
+                    Text(stringResource(R.string.saved_passwords), style = MaterialTheme.typography.labelMedium, color = ZtTheme.colors.secondaryText)
+                    androidx.compose.foundation.layout.FlowRow {
+                        saved.take(12).forEach { s ->
+                            androidx.compose.material3.AssistChip(
+                                onClick = { pw = s },
+                                label = { Text(if (show) s else s.take(2) + "*".repeat((s.length - 2).coerceIn(1, 6))) },
+                                modifier = Modifier.padding(end = 6.dp)
+                            )
+                        }
+                    }
+                }
             }
         },
-        confirmButton = { TextButton(onClick = { p.result.complete(pw) }) { Text(stringResource(R.string.ok)) } },
+        confirmButton = { TextButton(onClick = { ok() }) { Text(stringResource(R.string.ok)) } },
         dismissButton = { TextButton(onClick = { p.result.complete(null) }) { Text(stringResource(R.string.cancel)) } }
     )
 }

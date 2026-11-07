@@ -117,6 +117,9 @@ fun SettingsScreen() {
             Toggle(stringResource(R.string.show_hidden), null, Prefs.showHidden) { Prefs.showHidden = it }
             Toggle(stringResource(R.string.sort_folders_first), null, Prefs.foldersFirst) { Prefs.foldersFirst = it }
             Toggle(stringResource(R.string.show_thumbnails), null, Prefs.showThumbnails) { Prefs.showThumbnails = it }
+            Toggle(stringResource(R.string.show_folder_sizes), stringResource(R.string.show_folder_sizes_summary), Prefs.showFolderSizes) {
+                Prefs.showFolderSizes = it
+            }
             Toggle(stringResource(R.string.show_folder_count), null, Prefs.showFolderCount) {
                 Prefs.showFolderCount = it
                 AppState.refreshAll()
@@ -145,6 +148,16 @@ fun SettingsScreen() {
                 stringResource(R.string.app_lock),
                 stringResource(if (AppLock.enabled) R.string.app_lock_on else R.string.app_lock_off)
             ) { dialog = "pin" }
+            val pwCleared = stringResource(R.string.msg_passwords_cleared)
+            Item(stringResource(R.string.saved_passwords), stringResource(R.string.n_items, Prefs.savedPasswords.size)) {
+                Prefs.savedPasswordsRaw = ""
+                AppState.toast(pwCleared)
+            }
+            val keyCert = remember(dialog) { com.ztmanager.apk.ApkSigning.certificateSha256() }
+            Item(
+                stringResource(R.string.signing_key),
+                keyCert?.let { stringResource(R.string.signing_key_info, it.take(29)) } ?: stringResource(R.string.signing_key_none)
+            ) { if (keyCert != null) dialog = "key" }
 
             Header(stringResource(R.string.section_editor))
             Column(Modifier.padding(horizontal = 20.dp, vertical = 6.dp)) {
@@ -187,6 +200,20 @@ fun SettingsScreen() {
     }
 
     if (dialog == "pin") PinDialog { dialog = null }
+    if (dialog == "key") {
+        AlertDialog(
+            onDismissRequest = { dialog = null },
+            title = { Text(stringResource(R.string.signing_key)) },
+            text = { Text(stringResource(R.string.signing_key_reset_message)) },
+            confirmButton = {
+                TextButton(onClick = {
+                    com.ztmanager.apk.ApkSigning.deleteKey()
+                    dialog = null
+                }) { Text(stringResource(R.string.signing_key_reset), color = MaterialTheme.colorScheme.error) }
+            },
+            dismissButton = { TextButton(onClick = { dialog = null }) { Text(stringResource(R.string.cancel)) } }
+        )
+    }
 
     when (dialog) {
         "theme" -> ChoiceDialog(

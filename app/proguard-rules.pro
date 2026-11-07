@@ -26,3 +26,7 @@
 -dontwarn org.apache.commons.codec.**
 -dontwarn net.sf.sevenzipjbinding.**
 -ignorewarnings
+
+-keep class com.android.apksig.** { *; }
+-dontwarn com.android.apksig.**
+-dontwarn com.google.zxing.**

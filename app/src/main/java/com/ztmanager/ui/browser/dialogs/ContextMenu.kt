@@ -3,6 +3,12 @@ package com.ztmanager.ui.browser.dialogs
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AddToHomeScreen
 import androidx.compose.material.icons.filled.Android
+import androidx.compose.material.icons.filled.Create
+import androidx.compose.material.icons.filled.Link
+import androidx.compose.material.icons.filled.Schedule
+import androidx.compose.material.icons.filled.VerifiedUser
+import androidx.compose.material.icons.filled.Visibility
+import androidx.compose.material.icons.filled.VisibilityOff
 import androidx.compose.material.icons.filled.CallMerge
 import androidx.compose.material.icons.filled.CallSplit
 import androidx.compose.material.icons.filled.EnhancedEncryption
@@ -104,6 +110,11 @@ fun ContextMenuDialog(spec: DialogSpec.ContextMenu, onDismiss: () -> Unit) {
                 pane.clearSelection()
             }
             if (session.handle.canModify) {
+                if (single != null) {
+                    actions += MenuAction(stringResource(R.string.action_rename), Icons.Filled.Edit) {
+                        Dialogs.show(DialogSpec.Rename(pane, single))
+                    }
+                }
                 actions += MenuAction(sDelete, Icons.Filled.Delete) {
                     Dialogs.show(DialogSpec.Delete(pane, entries))
                 }
@@ -167,6 +178,8 @@ fun ContextMenuDialog(spec: DialogSpec.ContextMenu, onDismiss: () -> Unit) {
             actions += MenuAction(stringResource(R.string.action_apk_info), Icons.Filled.Android) {
                 AppState.push(Screen.ApkInfo(f.absolutePath))
             }
+            actions += MenuAction(stringResource(R.string.action_sign_apk), Icons.Filled.Create) { Actions.signApk(context, f) }
+            actions += MenuAction(stringResource(R.string.action_verify_signature), Icons.Filled.VerifiedUser) { Actions.verifyApk(context, f) }
         }
     } else if (entries.all { !it.isDirectory && FileType.isArchive(it.name) }) {
         actions += MenuAction(stringResource(R.string.action_extract_each), Icons.Filled.Unarchive) {
@@ -267,6 +280,14 @@ fun ContextMenuDialog(spec: DialogSpec.ContextMenu, onDismiss: () -> Unit) {
             actions += MenuAction(stringResource(R.string.action_home_shortcut), Icons.Filled.AddToHomeScreen) {
                 Shortcuts.pinFolder(context, single.path)
             }
+            actions += MenuAction(stringResource(R.string.action_terminal_here), Icons.Filled.Code) {
+                AppState.push(Screen.Terminal(single.path))
+            }
+            val hasNoMedia = File(single.path, ".nomedia").exists()
+            actions += MenuAction(
+                stringResource(if (hasNoMedia) R.string.action_nomedia_remove else R.string.action_nomedia_add),
+                if (hasNoMedia) Icons.Filled.Visibility else Icons.Filled.VisibilityOff
+            ) { Actions.toggleNoMedia(context, File(single.path)) }
         } else {
             actions += MenuAction(stringResource(R.string.action_checksum), Icons.Filled.Fingerprint) {
                 Dialogs.show(DialogSpec.Hash(File(single.path)))
@@ -274,6 +295,19 @@ fun ContextMenuDialog(spec: DialogSpec.ContextMenu, onDismiss: () -> Unit) {
         }
         actions += MenuAction(stringResource(R.string.action_permissions), Icons.Filled.Lock) {
             Dialogs.show(DialogSpec.Permissions(pane, single))
+        }
+    }
+    val linkTitle = stringResource(R.string.action_create_link)
+    val nameHint = stringResource(R.string.name)
+    actions += MenuAction(stringResource(R.string.action_copy_path), Icons.Filled.Link) {
+        Intents.copyText(context, entries.joinToString("\n") { it.path })
+    }
+    actions += MenuAction(stringResource(R.string.action_touch), Icons.Filled.Schedule) { Actions.touch(context, files) }
+    if (single != null) {
+        actions += MenuAction(linkTitle, Icons.Filled.Link) {
+            Dialogs.show(DialogSpec.Input(linkTitle, single.name + " link", nameHint) { n ->
+                if (n.isNotBlank()) Actions.createLink(context, File(single.path), n.trim())
+            })
         }
     }
     actions += MenuAction(sProps, Icons.Filled.Info) { Dialogs.show(DialogSpec.Properties(pane, entries)) }

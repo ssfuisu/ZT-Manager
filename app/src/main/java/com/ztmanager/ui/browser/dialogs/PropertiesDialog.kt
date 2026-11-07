@@ -61,8 +61,18 @@ fun PropertiesDialog(spec: DialogSpec.Properties, onDismiss: () -> Unit) {
     val entries = spec.entries
     val single = entries.singleOrNull()
     var stats by remember { mutableStateOf<FolderStats?>(null) }
+    var media by remember { mutableStateOf<List<Pair<String, String>>>(emptyList()) }
+    val labels = MediaLabels(
+        stringResource(R.string.media_duration), stringResource(R.string.resolution),
+        stringResource(R.string.media_bitrate), stringResource(R.string.media_title),
+        stringResource(R.string.media_artist), stringResource(R.string.media_album)
+    )
     val needsStats = !entries.first().inArchive && entries.any { it.isDirectory } || entries.size > 1
     LaunchedEffect(Unit) {
+        val s1 = single
+        if (s1 != null && !s1.inArchive && !s1.isDirectory) {
+            media = withContext(Dispatchers.IO) { mediaInfo(File(s1.path), s1.type, labels) }
+        }
         if (needsStats && !entries.first().inArchive) {
             stats = withContext(Dispatchers.IO) { FileOps.stats(entries.map { File(it.path) }) }
         }
@@ -94,6 +104,7 @@ fun PropertiesDialog(spec: DialogSpec.Properties, onDismiss: () -> Unit) {
                         }
                     }
                     InfoRow(stringResource(R.string.modified), Format.dateLong(single.lastModified))
+                    media.forEach { (k, v) -> InfoRow(k, v) }
                     if (!single.inArchive) {
                         val f = File(single.path)
                         InfoRow(stringResource(R.string.permissions), single.permissions + "  (" + Integer.toOctalString(FileOps.readMode(single.path)) + ")")
@@ -128,6 +139,46 @@ fun PropertiesDialog(spec: DialogSpec.Properties, onDismiss: () -> Unit) {
             }
         }
     )
+}
+
+class MediaLabels(val duration: String, val resolution: String, val bitrate: String, val title: String, val artist: String, val album: String)
+
+private fun mediaInfo(f: File, type: FileType, l: MediaLabels): List<Pair<String, String>> {
+    val out = ArrayList<Pair<String, String>>()
+    when (type) {
+        FileType.IMAGE -> {
+            val o = android.graphics.BitmapFactory.Options().apply { inJustDecodeBounds = true }
+            android.graphics.BitmapFactory.decodeFile(f.absolutePath, o)
+            if (o.outWidth > 0) out.add(l.resolution to "${o.outWidth} x ${o.outHeight}")
+        }
+        FileType.AUDIO, FileType.VIDEO -> {
+            val r = android.media.MediaMetadataRetriever()
+            try {
+                r.setDataSource(f.absolutePath)
+                fun meta(k: Int) = r.extractMetadata(k)?.takeIf { it.isNotBlank() }
+                meta(android.media.MediaMetadataRetriever.METADATA_KEY_DURATION)?.toLongOrNull()?.let {
+                    out.add(l.duration to com.ztmanager.ui.viewer.formatTime(it.toInt()))
+                }
+                val w = meta(android.media.MediaMetadataRetriever.METADATA_KEY_VIDEO_WIDTH)
+                val h = meta(android.media.MediaMetadataRetriever.METADATA_KEY_VIDEO_HEIGHT)
+                if (w != null && h != null) out.add(l.resolution to "$w x $h")
+                meta(android.media.MediaMetadataRetriever.METADATA_KEY_BITRATE)?.toLongOrNull()?.let {
+                    out.add(l.bitrate to "${it / 1000} kbps")
+                }
+                meta(android.media.MediaMetadataRetriever.METADATA_KEY_TITLE)?.let { out.add(l.title to it) }
+                meta(android.media.MediaMetadataRetriever.METADATA_KEY_ARTIST)?.let { out.add(l.artist to it) }
+                meta(android.media.MediaMetadataRetriever.METADATA_KEY_ALBUM)?.let { out.add(l.album to it) }
+            } catch (_: Exception) {
+            } finally {
+                try {
+                    r.release()
+                } catch (_: Exception) {
+                }
+            }
+        }
+        else -> {}
+    }
+    return out
 }
 
 @Composable

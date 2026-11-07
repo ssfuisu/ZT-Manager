@@ -40,6 +40,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontFamily
@@ -107,6 +108,18 @@ fun ShareScreen() {
                                     Text(url, fontFamily = FontFamily.Monospace, fontSize = 18.sp, color = MaterialTheme.colorScheme.primary)
                                 }
                                 IconButton(onClick = { Intents.copyText(context, url) }) { Icon(Icons.Filled.ContentCopy, null, Modifier.size(18.dp)) }
+                            }
+                        }
+                        addresses.firstOrNull()?.let { ip ->
+                            val url = "http://$ip:${ShareServer.server?.port}/"
+                            val qr = remember(url) { com.ztmanager.ui.common.Qr.bitmap(url, 512)?.asImageBitmap() }
+                            if (qr != null) {
+                                androidx.compose.foundation.Image(
+                                    qr, null,
+                                    modifier = Modifier
+                                        .padding(vertical = 8.dp)
+                                        .size(180.dp)
+                                )
                             }
                         }
                         Text(stringResource(R.string.share_hint), style = MaterialTheme.typography.bodySmall, color = ZtTheme.colors.secondaryText)

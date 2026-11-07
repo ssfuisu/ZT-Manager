@@ -48,16 +48,29 @@ fun BatchRenameDialog(spec: DialogSpec.BatchRename, onDismiss: () -> Unit) {
     var find by remember { mutableStateOf("") }
     var replace by remember { mutableStateOf("") }
     var regex by remember { mutableStateOf(false) }
+    var case by remember { mutableStateOf(0) }
     var error by remember { mutableStateOf<String?>(null) }
     val failedFmt = stringResource(R.string.msg_rename_failed)
 
     fun newName(e: FileEntry, i: Int): String {
+        val raw = rawName(e, i)
+        return when (case) {
+            1 -> raw.lowercase()
+            2 -> raw.uppercase()
+            else -> raw
+        }
+    }
+
+    fun rawName(e: FileEntry, i: Int): String {
         val (base, ext) = splitName(e)
         return if (patternMode) {
             val n = (start.toIntOrNull() ?: 1) + i
             val width = entries.size.toString().length
+            val date = java.text.SimpleDateFormat("yyyyMMdd", java.util.Locale.US).format(java.util.Date(e.lastModified))
+            val time = java.text.SimpleDateFormat("HHmmss", java.util.Locale.US).format(java.util.Date(e.lastModified))
             var out = pattern.replace("{name}", base).replace("{ext}", ext)
                 .replace("{n}", n.toString().padStart(width, '0'))
+                .replace("{date}", date).replace("{time}", time)
             if (ext.isEmpty()) out = out.removeSuffix(".")
             out
         } else {
@@ -85,6 +98,11 @@ fun BatchRenameDialog(spec: DialogSpec.BatchRename, onDismiss: () -> Unit) {
                     OutlinedTextField(find, { find = it }, label = { Text(stringResource(R.string.find)) }, singleLine = true, modifier = Modifier.fillMaxWidth())
                     OutlinedTextField(replace, { replace = it }, label = { Text(stringResource(R.string.replace_with)) }, singleLine = true, modifier = Modifier.fillMaxWidth())
                     CheckRow(stringResource(R.string.regex), regex) { regex = it }
+                }
+                Row(Modifier.padding(top = 6.dp)) {
+                    listOf(R.string.case_keep, R.string.case_lower, R.string.case_upper).forEachIndexed { i, label ->
+                        FilterChip(selected = case == i, onClick = { case = i }, label = { Text(stringResource(label)) }, modifier = Modifier.padding(end = 6.dp))
+                    }
                 }
                 Spacer(Modifier.height(8.dp))
                 Text(stringResource(R.string.preview), style = MaterialTheme.typography.labelLarge)

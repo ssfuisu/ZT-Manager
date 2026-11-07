@@ -98,7 +98,7 @@ private class ShellSession(root: Boolean, dir: File?, val onLine: (String, Boole
 }
 
 @Composable
-fun TerminalScreen() {
+fun TerminalScreen(startDir: String = "") {
     val lines = remember { mutableStateListOf<Pair<String, Boolean>>() }
     var input by remember { mutableStateOf("") }
     var root by remember { mutableStateOf(Prefs.rootMode) }
@@ -106,7 +106,7 @@ fun TerminalScreen() {
     var restart by remember { mutableStateOf(0) }
     val history = remember { mutableStateListOf<String>() }
     val listState = rememberLazyListState()
-    val dir = AppState.active.currentDir
+    val dir = remember { startDir.takeIf { it.isNotEmpty() }?.let { File(it) } ?: AppState.active.currentDir }
 
     DisposableEffect(root, restart) {
         val s = try {
